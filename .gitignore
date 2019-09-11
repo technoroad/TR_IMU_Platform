@@ -1,0 +1,9 @@
+#ignore
+*.o
+*.d
+*.map
+*.elf
+*.su
+*.list
+*.pref
+.mxproject
