@@ -45,6 +45,9 @@ THE SOFTWARE.
 #define _2BMLZ //confirmed
 //#define _3BMLZ //unconfirmed
 
+//Standard Gravity Acceleration
+#define G_ACCL 9.80665
+
 #if defined(ADIS16470)|defined(ADIS16475)
 	#define ADIS1647X
 #endif

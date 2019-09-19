@@ -165,8 +165,8 @@ void Error_Handler(void);
 #define GYRO_ACC_TEMP 0b0110
 #define USB_to_UART_MODE 0b1111
 
-#define BoardName "IMU-Platform"
-//#define BoardName "ADIS1647X-BRD"
+#define BoardName "TR-IMU-Platform"
+//#define BoardName "TR-IMU1647X"
 
 // Please Change this value when changing the TIM3 cycle.
 #define CONTROL_CYCLE 0.001 	//[s]

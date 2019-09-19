@@ -157,8 +157,8 @@ int ADIS_32bitIMUConvert(u16 *buf,double *gyro,double *acc){
 		acc_hex[i] =((buf[i*2+8] << 16) | buf[i*2+7]);
 		acc[i] =(s32)acc_hex[i] / AcclSensitivity;
 		acc_raw[i] =acc[i];
+		acc[i] =acc[i] *G_ACCL;
 	}
-
 
 	double n = sqrt(acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
 	if(n>0.0001){
