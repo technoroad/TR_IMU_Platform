@@ -536,7 +536,7 @@ void Read_FlashData(){
 
 	// If the version is changed or the CSUM value does not match,
 	// the parameter is reset to the initial value.
-	if((Params.version != VERSION) && (csum != Params.csum)){
+	if((Params.version != VERSION) || (csum != Params.csum)){
 	  Params_initialize();
 	  writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
 	}

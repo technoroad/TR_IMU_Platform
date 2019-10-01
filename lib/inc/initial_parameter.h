@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <libraries.h>
 
-#define VERSION 0x20190924		// Version
+#define VERSION 0x20191001		// Version
 #define gain_p_init 1.0				// Kp gain
 #define gain_i_init 0.1				// Ki gain
 #define send_cycle_ms_init 10		//Send cycle[ms]
