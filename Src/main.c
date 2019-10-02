@@ -531,14 +531,14 @@ void Start_PoseUpdateTimer(){
 
 void Read_FlashData(){
 	// Read parameters from FLASH memory.
-	loadFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
-	u8 csum = CSUM_calc((uint8_t*)&Params,sizeof(Params)-CSUM_SIZE);
+	loadFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(FLASH_ROM_Parameters));
+	u8 csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
 
 	// If the version is changed or the CSUM value does not match,
 	// the parameter is reset to the initial value.
 	if((Params.version != VERSION) || (csum != Params.csum)){
 	  Params_initialize();
-	  writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
+	  writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(FLASH_ROM_Parameters));
 	}
 }
 /* USER CODE END 4 */

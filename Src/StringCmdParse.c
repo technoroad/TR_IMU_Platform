@@ -394,8 +394,8 @@ static bool LOAD_INIT_func(){
 }
 
 static bool SAVE_PARAM_func(){
-	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(Params)-CSUM_SIZE);
-	writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
+	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
+	writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(FLASH_ROM_Parameters));
 
 	char buf[128];
 	memset(buf,0,sizeof(buf));
@@ -602,7 +602,7 @@ void Params_initialize(){
 	Params.gain_i = gain_i_init ;
 	Params.send_cycle_ms =send_cycle_ms_init;
 	Params.startup_time_s = startup_time_s_init;
-	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(Params)-CSUM_SIZE);
+	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
 
 	Set_SendCycle((double)Params.send_cycle_ms/1000.0);
 }
