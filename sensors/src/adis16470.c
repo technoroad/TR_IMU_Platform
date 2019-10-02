@@ -70,6 +70,8 @@ void ADIS_INIT(void){
 		}
 	}
 
+
+
 	//Hard filter setting in sensor
 	ADIS_HardwareFilterSelect(1);
 }
@@ -249,6 +251,10 @@ int ADIS_RegWrite(u8 regAddr, s16 regData){
 void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi){
 	*GyroSensi = GyroSensitivity;
 	*AccSensi = AcclSensitivity;
+}
+
+void ADIS_SetDecimation(u16 dec_rate){
+	ADIS_RegWrite(DEC_RATE, dec_rate & 0x07FF);
 }
 
 #endif

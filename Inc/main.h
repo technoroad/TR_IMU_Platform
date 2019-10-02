@@ -119,8 +119,6 @@ void Error_Handler(void);
 #define CONF_SW1_GPIO_Port GPIOB
 #define USER_SW_Pin GPIO_PIN_1
 #define USER_SW_GPIO_Port GPIOB
-#define ADIS_RDY_Pin GPIO_PIN_9
-#define ADIS_RDY_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define LD1_ON HAL_GPIO_WritePin(LD1_GPIO_Port,LD1_Pin,GPIO_PIN_RESET)
 #define LD1_OFF HAL_GPIO_WritePin(LD1_GPIO_Port,LD1_Pin,GPIO_PIN_SET)

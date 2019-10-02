@@ -446,8 +446,14 @@ static bool SET_SEND_CYCLE_func(){
 		return false;
 	}
 
+	bool pflg= IsSendEnable();
+
 	Params.send_cycle_ms = cycle;
 	Set_SendCycle((double)Params.send_cycle_ms/1000.0);
+
+	if(pflg){
+		SendStart();
+	}
 
 	char buf[128];
 	memset(buf,0,sizeof(buf));
@@ -602,7 +608,5 @@ void Params_initialize(){
 	Params.gain_i = gain_i_init ;
 	Params.send_cycle_ms =send_cycle_ms_init;
 	Params.startup_time_s = startup_time_s_init;
-	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(Params)-CSUM_SIZE);
-
-	Set_SendCycle((double)Params.send_cycle_ms/1000.0);
+	Params.csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
 }

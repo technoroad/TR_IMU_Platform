@@ -40,86 +40,62 @@ u8 IsEnable_UART(void){
 }
 
 void U_puts(char * s){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_puts(s);
 	}else{
 		//USB
 		USB_puts(s);
-		DEBUG_PIN1_LOW;
 	}
 }
 
 void U_putd(char * s,char len){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_putd(s,len);
 	}else{
 		//USB
 		USB_putd(s,len);
-		DEBUG_PIN1_LOW;
 	}
 }
 
 void U_putx(u32 num,char len){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_putx(num,len);
 	}else{
 		//USB
 		USB_putx(num,len);
-		DEBUG_PIN1_LOW;
 	}
 }
 
 void U_putn(s32 num,char len){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_putn(num,len);
 	}else{
 		//USB
 		USB_putn(num,len);
-		DEBUG_PIN1_LOW;
 	}
 }
 
 void U_putf(float val,char beforepoint,char afterpoint){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_putf(val,beforepoint,afterpoint);
 	}else{
 		//USB
 		USB_putf(val,beforepoint,afterpoint);
-		DEBUG_PIN1_LOW;
 	}
 }
 
 void U_putlf(float val,char afterpoint){
-	// For checking USB and UART communication time
-	DEBUG_PIN1_HIGH;
-
 	if(UART_FLAG){
 		//UART
 		UART_putlf(val,afterpoint);
 	}else{
 		//USB
 		USB_putlf(val,afterpoint);
-		DEBUG_PIN1_LOW;
 	}
 }
 

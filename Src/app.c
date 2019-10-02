@@ -31,7 +31,6 @@ void AutoBiasUpdate_STOP(void);
 
 static double CTRL_Cycle = 0.001;
 static double SEND_Cycle = 0.001;
-static u32 SendCntPeriod =10;	// Counter for delaying transmission cycle
 static int ABU_Cnt =120*2;
 
 extern TIM_HandleTypeDef htim3;
@@ -95,19 +94,22 @@ u8 IMU_INIT(double c_cycle,double s_cycle){
   CTRL_Cycle = c_cycle;
   SEND_Cycle = s_cycle;
 
-  // Send counter calculation
-  SendCntPeriod =(s32)((SEND_Cycle*1000.0)/(CTRL_Cycle*1000.0))-1; //10ms
+  // Reset TIM cycle
+  Reset_PrintTIM((u32)(SEND_Cycle*1000.0));
 
   // IMU initialization
   ADIS_INIT();
 
+  // Set RDY speed
+  ADIS_SetDecimation(1);
+
   // Bias_Correction_Update ON / OFF
-  if(!(conf_sw & CSW5_MASK)){// In the case of OFF
+  if(conf_sw & CSW5_MASK){// In the case of ON
+	  AutoBiasUpdateFlg=false;
+  }else{
 	  LD2_ON;
 	  AutoBiasUpdateFlg=true;
 	  AutoBiasUpdate_START();
-  }else{
-	  AutoBiasUpdateFlg=false;
   }
 
   return conf_sw;
@@ -116,24 +118,6 @@ u8 IMU_INIT(double c_cycle,double s_cycle){
 void pose_update_func(){
 	// Acquisition of sensor value and calculation of attitude angle.
 	mkAE_UpdateAngle(&yaw,&pitch,&roll);
-
-	// Output according to the set transmission cycle.
-	static int i=0;
-	if(SendEnableFlg){
-		if(++i >SendCntPeriod){
-			if(PoseUpdateFlg){
-				LD3_ON;
-			}else{
-				LD3_OFF;
-			}
-
-			PoseUpdateFlg =true;
-			i=0;
-		}
-	}else{
-		i=0;
-		PoseUpdateFlg =false;
-	}
 }
 
 // Update and transmit attitude angles.
@@ -141,123 +125,118 @@ void print_func(void)
 {
 	// Not sent during command processing
 	if(CMD_PARSE_FLAG){
-		PoseUpdateTermination();
+		return;
 	}
 
-	// transmit attitude angles.
-	if(IsPoseUpdate()){
-		// The mode is branched by the CONF switch.
-		switch(StringFormat){
+	// The mode is branched by the CONF switch.
+	switch(StringFormat){
 
-		// attitude angle output mode
-		case YawPitchRoll:
-		{
-			double arr[3]={yaw,pitch,roll};
-			U_PUT_TypeDouble_CSV(arr,3,3);
-			break;
+	// attitude angle output mode
+	case YawPitchRoll:
+	{
+		double arr[3]={yaw,pitch,roll};
+		U_PUT_TypeDouble_CSV(arr,3,3);
+		break;
+	}
+
+	// Output mode of angular velocity
+	case GYRO_Degree:
+	{
+		double gyro_raw[3],acc_raw[3];
+		Get_RawData(gyro_raw,acc_raw);
+
+		double arr[3];
+		for(int i=0;i<3;i++){
+			arr[i] =gyro_raw[i]*180.0/M_PI;
 		}
 
-		// Output mode of angular velocity
-		case GYRO_Degree:
-		{
-			double gyro_raw[3],acc_raw[3];
-			Get_RawData(gyro_raw,acc_raw);
+		U_PUT_TypeDouble_CSV(arr,3,3);
+		break;
+	}
 
-			double arr[3];
-			for(int i=0;i<3;i++){
-				arr[i] =gyro_raw[i]*180.0/M_PI;
-			}
+	// This mode transmits raw data of sensor values as a character string.
+	case GYRO_ACC_HexData:
+	{
+		u32 gyro_hex[3],acc_hex[3];
+		Get_HexData(gyro_hex,acc_hex);
 
-			U_PUT_TypeDouble_CSV(arr,3,3);
-			break;
+		u32 arr[6];
+		for(int i =0;i<3;i++){
+			arr[i] =gyro_hex[i];
+			arr[i+3] =acc_hex[i];
 		}
 
-		// This mode transmits raw data of sensor values as a character string.
-		case GYRO_ACC_HexData:
-		{
-			u32 gyro_hex[3],acc_hex[3];
-			Get_HexData(gyro_hex,acc_hex);
+		U_PUT_TypeHEX_ADD_CSUM_CSV(arr,6);
+		break;
+	}
 
-			u32 arr[6];
-			for(int i =0;i<3;i++){
-				arr[i] =gyro_hex[i];
-				arr[i+3] =acc_hex[i];
-			}
+	// Mode to transmit raw data of sensor values in binary.
+	case GYRO_ACC_BinaryData:
+	{
+		u32 gyro_hex[3],acc_hex[3];
+		Get_HexData(gyro_hex,acc_hex);
 
-			U_PUT_TypeHEX_ADD_CSUM_CSV(arr,6);
-			break;
+		u32 arr[6];
+		for(int i =0;i<3;i++){
+			arr[i] =gyro_hex[i];
+			arr[i+3] =acc_hex[i];
 		}
 
-		// Mode to transmit raw data of sensor values in binary.
-		case GYRO_ACC_BinaryData:
-		{
-			u32 gyro_hex[3],acc_hex[3];
-			Get_HexData(gyro_hex,acc_hex);
+		char sb[128];
+		memset(sb,0,sizeof(sb));
 
-			u32 arr[6];
-			for(int i =0;i<3;i++){
-				arr[i] =gyro_hex[i];
-				arr[i+3] =acc_hex[i];
-			}
-
-			char sb[128];
-			memset(sb,0,sizeof(sb));
-
-			u8 sb_len =0;
-			sb[sb_len++] = 0xAC;
-			sb[sb_len++] = 0xCA;
-			sb[sb_len++] = 24; //length
-			for(int i =0;i<6;i++){
-				sb[sb_len++] =(arr[i]>>24)&0xff;
-				sb[sb_len++] =(arr[i]>>16)&0xff;
-				sb[sb_len++] =(arr[i]>>8)&0xff;
-				sb[sb_len++] =(arr[i])&0xff;
-			}
-
-			u32 sum=0;
-			for(int i =2;i<sb_len;i++){
-				sum+=sb[i];
-			}
-			sb[sb_len++]=sum&0xff;
-			U_putd(sb,(char)sb_len);
-			break;
+		u8 sb_len =0;
+		sb[sb_len++] = 0xAC;
+		sb[sb_len++] = 0xCA;
+		sb[sb_len++] = 24; //length
+		for(int i =0;i<6;i++){
+			sb[sb_len++] =(arr[i]>>24)&0xff;
+			sb[sb_len++] =(arr[i]>>16)&0xff;
+			sb[sb_len++] =(arr[i]>>8)&0xff;
+			sb[sb_len++] =(arr[i])&0xff;
 		}
 
-		// Mode to transmit attitude angle and acceleration values.
-		case YawPitchRoll_ACC:
-		{
-			double gyro_raw[3],acc_raw[3];
-			Get_RawData(gyro_raw,acc_raw);
+		u32 sum=0;
+		for(int i =2;i<sb_len;i++){
+			sum+=sb[i];
+		}
+		sb[sb_len++]=sum&0xff;
+		U_putd(sb,(char)sb_len);
+		break;
+	}
 
-			double arr[6]={yaw,pitch,roll,0,0,0};
-			for(int i=3;i<6;i++){
-				arr[i] =acc_raw[i-3];
-			}
+	// Mode to transmit attitude angle and acceleration values.
+	case YawPitchRoll_ACC:
+	{
+		double gyro_raw[3],acc_raw[3];
+		Get_RawData(gyro_raw,acc_raw);
 
-			U_PUT_TypeDouble_CSV(arr,6,3);
-			break;
+		double arr[6]={yaw,pitch,roll,0,0,0};
+		for(int i=3;i<6;i++){
+			arr[i] =acc_raw[i-3];
 		}
 
-		case GYRO_ACC_TEMP:
-		{
-			double gyro_raw[3],acc_raw[3];
-			Get_RawData(gyro_raw,acc_raw);
+		U_PUT_TypeDouble_CSV(arr,6,3);
+		break;
+	}
 
-			double arr[7]={0,0,0,0,0,0};
-			for(int i=0;i<3;i++){
-				arr[i] =gyro_raw[i];
-				arr[i+3] =acc_raw[i];
-			}
+	case GYRO_ACC_TEMP:
+	{
+		double gyro_raw[3],acc_raw[3];
+		Get_RawData(gyro_raw,acc_raw);
 
-			arr[6] =Get_Temp();
-
-			U_PUT_TypeDouble_CSV(arr,7,3);
-			break;
+		double arr[7]={0,0,0,0,0,0};
+		for(int i=0;i<3;i++){
+			arr[i] =gyro_raw[i];
+			arr[i+3] =acc_raw[i];
 		}
 
-		}
+		arr[6] =Get_Temp();
 
-		PoseUpdateTermination();
+		U_PUT_TypeDouble_CSV(arr,7,3);
+		break;
+	}
+
 	}
 }
 
@@ -315,7 +294,11 @@ void PoseUpdateTermination(){
 // Transmission cycle setting function
 void Set_SendCycle(double s_cycle){
 	SEND_Cycle = s_cycle;
-	SendCntPeriod =(s32)((SEND_Cycle*1000.0)/(CTRL_Cycle*1000.0))-1; //10ms
+
+	SendStop();
+
+	// Reset TIM cycle
+	Reset_PrintTIM((u32)(SEND_Cycle*1000.0));
 }
 
 bool IsSendEnable(void){
@@ -324,10 +307,14 @@ bool IsSendEnable(void){
 
 void SendStart(void){
 	SendEnableFlg =true;
+	__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
+	HAL_TIM_Base_Start_IT(&htim3);
 }
 
 void SendStop(void){
 	SendEnableFlg =false;
+	HAL_TIM_Base_Stop_IT(&htim3);
+	__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
 }
 
 void Set_Format(u8 format){
@@ -342,12 +329,13 @@ double Get_CtrlCycle(void){
 	return CTRL_Cycle;
 }
 
-void AutoBiasUpdate_TIM(){
+bool AutoBiasUpdate_TIM(){
 	if(--ABU_Cnt <= 0){
 		LD2_OFF;
 		ADIS_Bias_Correction_Update();
 		AutoBiasUpdateFlg = false;
 		AutoBiasUpdate_STOP();
+		return true;
 	}else{
 		// When the user switch is pressed, standby is forcibly terminated.
 		if(READ_USER_SW){
@@ -356,7 +344,9 @@ void AutoBiasUpdate_TIM(){
 			AutoBiasUpdate_STOP();
 			HAL_Delay(500);
 			AutoBiasUpdateFlg = false;
+			return true;
 		}
+		return false;
 	}
 }
 
@@ -377,4 +367,40 @@ void AutoBiasUpdate_START(void){
 void AutoBiasUpdate_STOP(void){
 	HAL_TIM_Base_Stop_IT(&htim2);
 	__HAL_TIM_CLEAR_IT(&htim2, TIM_IT_UPDATE);
+}
+
+bool Reset_PrintTIM(u32 ms){
+
+	if(ms >65535 || ms == 0){
+		return false;
+	}
+
+	HAL_TIM_Base_DeInit(&htim3);
+
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	htim3.Instance = TIM3;
+	htim3.Init.Prescaler = 10800-1;
+	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim3.Init.Period = ms*10-1;
+	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
+	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+	{
+	Error_Handler();
+	}
+
+	return true;
 }

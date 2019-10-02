@@ -94,6 +94,8 @@ static void MX_TIM2_Init(void);
 void IMU_BRD_SETTING(double c_cycle,double s_cycle);
 void Start_PoseUpdateTimer();
 void Read_FlashData();
+void ReadyPin_Disable(void);
+void ReadyPin_Enable(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -102,6 +104,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim == &htim3)
 	{
+		// For checking USB and UART communication time
+		DEBUG_PIN1_HIGH;
+
+		print_func();
+
+		// For checking USB and UART communication time
+		DEBUG_PIN1_LOW;
+	}
+
+	if (htim == &htim2)
+	{
+		if(AutoBiasUpdate_TIM()){
+			// EXTI Interrupt enable
+			ReadyPin_Enable();
+		}
+	}
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if ( GPIO_Pin == GPIO_PIN_9 ){
 		// Bias automatic updating is not to work the IMU
 		if(!IsAutoBiasUpdate()){
 			// For processing time confirmation
@@ -121,12 +144,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			// For processing time confirmation
 			DEBUG_PIN3_LOW;
 		}
-	}
-
-	if (htim == &htim2)
-	{
-		AutoBiasUpdate_TIM();
-	}
+    }
 }
 /* USER CODE END 0 */
 
@@ -166,6 +184,9 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  // EXTI Interrupt disable
+  ReadyPin_Disable();
+
   // Read parameters from FLASH memory.
   Read_FlashData();
 
@@ -194,7 +215,6 @@ int main(void)
 			break;
 		default:				// attitude angle mode etc
 			ReadStringCmd();
-			print_func();
 			break;
 	}
     /* USER CODE END WHILE */
@@ -283,7 +303,7 @@ static void MX_SPI4_Init(void)
   hspi4.Init.CLKPolarity = SPI_POLARITY_HIGH;
   hspi4.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi4.Init.NSS = SPI_NSS_SOFT;
-  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi4.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi4.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -364,10 +384,10 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 1080-1;
+  htim3.Init.Prescaler = 10800-1;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 100-1;
-  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.Period = 10-1;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV2;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
@@ -489,11 +509,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CONF_SW1_Pin USER_SW_Pin PB8 ADIS_RDY_Pin */
-  GPIO_InitStruct.Pin = CONF_SW1_Pin|USER_SW_Pin|GPIO_PIN_8|ADIS_RDY_Pin;
+  /*Configure GPIO pins : CONF_SW1_Pin USER_SW_Pin PB8 */
+  GPIO_InitStruct.Pin = CONF_SW1_Pin|USER_SW_Pin|GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
@@ -523,24 +553,35 @@ void Start_PoseUpdateTimer(){
 		case USB_to_UART_MODE:	// XPORT setting mode
 			break;
 		default:				// attitude angle mode etc
-			__HAL_TIM_CLEAR_IT(&htim3, TIM_IT_UPDATE);
-			HAL_TIM_Base_Start_IT(&htim3);
+			if(!IsAutoBiasUpdate()){
+				// EXTI Interrupt enable
+				ReadyPin_Enable();
+			}
 			break;
 	}
 }
 
 void Read_FlashData(){
 	// Read parameters from FLASH memory.
-	loadFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
-	u8 csum = CSUM_calc((uint8_t*)&Params,sizeof(Params)-CSUM_SIZE);
+	loadFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(FLASH_ROM_Parameters));
+	u8 csum = CSUM_calc((uint8_t*)&Params,sizeof(FLASH_ROM_Parameters)-CSUM_SIZE);
 
 	// If the version is changed or the CSUM value does not match,
 	// the parameter is reset to the initial value.
 	if((Params.version != VERSION) || (csum != Params.csum)){
 	  Params_initialize();
-	  writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(Params));
+	  writeFlash(DATA_ADDR,(uint8_t*)&Params,sizeof(FLASH_ROM_Parameters));
 	}
 }
+
+void ReadyPin_Disable(void){
+	HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+}
+
+void ReadyPin_Enable(void){
+	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+}
+
 /* USER CODE END 4 */
 
 /**

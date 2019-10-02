@@ -43,6 +43,8 @@ double Get_CtrlCycle(void);
 
 bool IsAutoBiasUpdate();
 int AutoBiasUpdate_TimeLeft();
-void AutoBiasUpdate_TIM();
+bool AutoBiasUpdate_TIM();
+
+bool Reset_PrintTIM(u32 ms);
 
 #endif /* APP_H_ */
