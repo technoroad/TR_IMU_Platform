@@ -116,6 +116,8 @@ u8 ADIS_VerificationProductId(void);
 
 void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi);
 
+void ADIS_SetDecimation(u16 dec_rate);
+double ADIS_GetRDY_Freq();
 #endif
 
 #endif /* INC_ADIS16475_H_ */

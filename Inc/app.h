@@ -40,11 +40,13 @@ bool IsSendEnable(void);
 void Set_Format(u8 format);
 u8 Get_Format(void);
 double Get_CtrlCycle(void);
+double Get_SendCycle(void);
 
 bool IsAutoBiasUpdate();
 int AutoBiasUpdate_TimeLeft();
 bool AutoBiasUpdate_TIM();
 
+u32 Get_MIN_SEND_CYCLE();
 bool Reset_PrintTIM(u32 ms);
 
 #endif /* APP_H_ */

@@ -190,12 +190,15 @@ int main(void)
   // Read parameters from FLASH memory.
   Read_FlashData();
 
+  // Get control period from Ready pin frequency
+  double ctrl_cycle = 1.0/ADIS_GetRDY_Freq();
+
   // Initialize the sensor,
   //select the operation mode, and set the UART.
-  IMU_BRD_SETTING(CONTROL_CYCLE,(double)Params.send_cycle_ms/1000.0);
+  IMU_BRD_SETTING(ctrl_cycle,(double)Params.send_cycle_ms/1000.0);
 
   // Filter initialization
-  mkAE_Filter_Init(CONTROL_CYCLE);
+  mkAE_Filter_Init(ctrl_cycle);
 
   // Start PoseUpdateTimer
   Start_PoseUpdateTimer();

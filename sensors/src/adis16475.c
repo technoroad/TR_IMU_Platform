@@ -29,6 +29,12 @@ THE SOFTWARE.
 #include <libraries.h>
 #include "math.h"
 
+
+// decimation settings
+#define DECIMATION 2
+// Please enter the frequency of the Ready pin.
+#define RDY_FREQ (2000.0/(double)DECIMATION) 	//[Hz]
+
 // Save raw data of angular velocity and acceleration
 static vu32 gyro_hex[3],acc_hex[3];
 static double gyro_raw[3],acc_raw[3];
@@ -77,6 +83,9 @@ void ADIS_INIT(void){
 			HAL_Delay(500);
 		}
 	}
+
+	// Set RDY speed
+	ADIS_SetDecimation(DECIMATION-1);
 
 	// Hard filter setting in sensor
 	ADIS_HardwareFilterSelect(1);
@@ -256,6 +265,14 @@ int ADIS_RegWrite(u8 regAddr, s16 regData){
 void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi){
 	*GyroSensi = GyroSensitivity;
 	*AccSensi = AcclSensitivity;
+}
+
+void ADIS_SetDecimation(u16 dec_rate){
+	ADIS_RegWrite(DEC_RATE, dec_rate & 0x07FF);
+}
+
+double ADIS_GetRDY_Freq(){
+	return RDY_FREQ;
 }
 
 #endif

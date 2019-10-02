@@ -38,6 +38,7 @@ THE SOFTWARE.
 #define PAGE3_GLOB_CMD 0x02
 #define PAGE3_FILTR_BNK_0 0x16
 #define PAGE3_FILTR_BNK_1 0x18
+#define PAGE3_DEC_RATE 0x0C
 
 #define PAGE0 0
 #define PAGE1 1
@@ -73,6 +74,8 @@ void ADIS_BIAS_READ(u32 *bias);
 
 void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi);
 
+void ADIS_SetDecimation(u16 dec_rate);
+double ADIS_GetRDY_Freq();
 #endif
 
 #endif /* ADIS16495_H_ */

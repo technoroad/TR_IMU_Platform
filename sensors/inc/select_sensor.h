@@ -26,9 +26,9 @@ THE SOFTWARE.
 #define INC_SELECT_SENSOR_H_
 
 // Please select a sensor.
-#define ADIS16470
+//#define ADIS16470
 //#define ADIS16475
-//#define ADIS16495
+#define ADIS16495
 
 // Switching source code read by sensor.
 #if defined(ADIS16470)

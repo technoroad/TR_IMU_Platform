@@ -166,9 +166,6 @@ void Error_Handler(void);
 #define BoardName "TR-IMU-Platform"
 //#define BoardName "TR-IMU1647X"
 
-// Please Change this value when changing the TIM3 cycle.
-#define CONTROL_CYCLE 0.001 	//[s]
-
 // Address to start writing data to flash memory
 #define DATA_ADDR 0x080C0000
 /* USER CODE END Private defines */

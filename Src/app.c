@@ -29,6 +29,9 @@ void U_PUT_TypeHEX_ADD_CSUM_CSV(u32 * array,int length);
 void AutoBiasUpdate_START(void);
 void AutoBiasUpdate_STOP(void);
 
+#define MAX_SEND_CYCLE 65535
+#define MIN_SEND_CYCLE 1
+
 static double CTRL_Cycle = 0.001;
 static double SEND_Cycle = 0.001;
 static int ABU_Cnt =120*2;
@@ -99,9 +102,6 @@ u8 IMU_INIT(double c_cycle,double s_cycle){
 
   // IMU initialization
   ADIS_INIT();
-
-  // Set RDY speed
-  ADIS_SetDecimation(1);
 
   // Bias_Correction_Update ON / OFF
   if(conf_sw & CSW5_MASK){// In the case of ON
@@ -329,6 +329,10 @@ double Get_CtrlCycle(void){
 	return CTRL_Cycle;
 }
 
+double Get_SendCycle(void){
+	return SEND_Cycle;
+}
+
 bool AutoBiasUpdate_TIM(){
 	if(--ABU_Cnt <= 0){
 		LD2_OFF;
@@ -369,9 +373,13 @@ void AutoBiasUpdate_STOP(void){
 	__HAL_TIM_CLEAR_IT(&htim2, TIM_IT_UPDATE);
 }
 
+u32 Get_MIN_SEND_CYCLE(){
+	return MIN_SEND_CYCLE;
+}
+
 bool Reset_PrintTIM(u32 ms){
 
-	if(ms >65535 || ms == 0){
+	if(ms >MAX_SEND_CYCLE || ms < MIN_SEND_CYCLE){
 		return false;
 	}
 
