@@ -95,12 +95,12 @@ u8 ADIS_VerificationProductId(void){
 
 // Update sensor bias value
 void ADIS_Bias_Correction_Update(void){
-	ADIS_RegWrite(GLOB_CMD, 0x0001);
+	ADIS_RegWrite_16bit(GLOB_CMD, 0x0001);
 }
 
 // Write to any address value
 void ADIS_WRITE_REG(u16 addr,u16 value){
-	ADIS_RegWrite(addr,value);
+	ADIS_RegWrite_16bit(addr,value);
 }
 
 // Read any address value
@@ -133,7 +133,7 @@ u16 ADIS_PAGE_DUMP(u16 * vals){
 //Hard filter selection.
 //See the data sheet for details.
 bool ADIS_HardwareFilterSelect(int dat) {
-	ADIS_RegWrite(FILT_CTRL, dat); // Set digital filter
+	ADIS_RegWrite_16bit(FILT_CTRL, dat); // Set digital filter
 	return true;
 }
 
@@ -229,27 +229,28 @@ u16 ADIS_NoBloking_RegRead(u8 addr){
 	return rb;
 }
 
-// Write to register
-int ADIS_RegWrite(u8 regAddr, s16 regData){
+// Write 8bit data to register
+int ADIS_RegWrite_8bit(u8 regAddr, s8 regData){
 	// Write register address and data
-	uint16_t addr = (((regAddr & 0x7F) | 0x80) << 8); // Toggle sign bit, and check that the address is 8 bits
-	uint16_t lowWord = (addr | (regData & 0xFF)); // OR Register address (A) with data(D) (AADD)
-	uint16_t highWord = ((addr | 0x100) | ((regData >> 8) & 0xFF)); // OR Register address with data and increment address
+	uint16_t addr = ((regAddr | 0x80) << 8); // Toggle sign bit, and check that the address is 8 bits
+	uint16_t data = (addr | (regData & 0xFF)); // OR Register address (A) with data(D) (AADD)
 
-	// Write highWord to SPI bus
+	// Write 8bit data to SPI bus
 	SPI_enable_nss();
-	SPI_write_word(lowWord);
+	SPI_write_word(data);
 	SPI_disable_nss();
 
 	delay_us(tSTALL);
 
-	SPI_enable_nss();
-	SPI_write_word(highWord);
-	SPI_disable_nss();
+	return 1;
+}
 
-	delay_us(tSTALL);
+// Write 16bit data to register
+int ADIS_RegWrite_16bit(u8 regAddr, s16 regData){
+	ADIS_RegWrite_8bit(regAddr,regData & 0xFF);
+	ADIS_RegWrite_8bit(regAddr | 0x01,(regData >> 8) & 0xFF);
 
-	return(1);
+	return 1;
 }
 
 // Get sensor sensitivity

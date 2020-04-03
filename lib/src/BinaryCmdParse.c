@@ -132,7 +132,7 @@ void BinaryCmdParse(char* cmd,u32 len)
 			if(len %2==0)return;
 
 			for(int i=1;i<len;i+=2){
-				ADIS_RegWrite(cmd[i],cmd[i+1]);
+				ADIS_RegWrite_8bit(cmd[i],cmd[i+1]);
 			}
 
 			char sb[128];

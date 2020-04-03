@@ -66,7 +66,8 @@ double ADIS_16bitTempConvert(u16 *buf);
 
 u16 ADIS_Bloking_RegRead(u8 addr);
 u16 ADIS_NoBloking_RegRead(u8 addr);
-int ADIS_RegWrite(u8 regAddr, s16 regData);
+int ADIS_RegWrite_8bit(u8 regAddr, s8 regData);
+int ADIS_RegWrite_16bit(u8 regAddr, s16 regData);
 
 u8 ADIS_VerificationProductId(void);
 void ADIS_BIAS_READ(u32 *bias);
