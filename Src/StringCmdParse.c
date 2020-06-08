@@ -63,12 +63,12 @@ static bool SET_STARTUP_TIME_func();
 
 //Command parse processing
 void StringCmdParse( char c){
-	CMD_PARSE_FLAG =true;
-
 	if (c == '\r'){
 		//ignore '\r'
 		return;
 	}
+
+	CMD_PARSE_FLAG =true;
 
 	if(c != '\n'){
 		CmdBuf[CmdBuf_wp++] = c;
@@ -220,7 +220,7 @@ bool WRITE_REG_func(){
 	u16 addr =HexStringToU16(words[2]);
 	u16 value=HexStringToU16(words[3]);
 
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	ADIS_WRITE_REG(page,addr,value);
 #else
 	ADIS_WRITE_REG(addr,value);
@@ -247,7 +247,7 @@ bool READ_REG_func(){
 	u16 page =HexStringToU16(words[1]);
 	u16 addr =HexStringToU16(words[2]);
 
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	// Can not read page 0 register 0x7C
 	if(page ==PAGE_ID && addr == PAGE0_BURST_CMD)return false;
 	u16 value =ADIS_READ_REG(page,addr);
@@ -277,7 +277,7 @@ bool PAGE_DUMP_func(){
 
 	u16 vals[64];
 	memset(vals,0,sizeof(vals));
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 	u16 page_len =ADIS_PAGE_DUMP(page,vals);
 #else
 	u16 page_len =ADIS_PAGE_DUMP(vals);
@@ -310,7 +310,7 @@ bool HARD_FILTER_SELECT_func(){
 		array[i] =atoi(words[i+1]);
 	}
 
-#if !defined(ADIS1647X)
+#if defined(ADIS1649X)
 	ADIS_HardwareFilterSelect(
 			array[0],array[1],array[2],array[3],array[4],array[5]);
 #else

@@ -30,6 +30,8 @@ THE SOFTWARE.
 //#define ADIS16475
 //#define ADIS16477
 #define ADIS16495
+//#define ADIS16500
+//#define ADIS16505
 
 // Switching source code read by sensor.
 #if defined(ADIS16470)
@@ -41,6 +43,11 @@ THE SOFTWARE.
 	#include "adis16477.h"
 #elif defined(ADIS16495)
 	#include "adis16495.h"
+#elif defined(ADIS16500)
+	#include "adis16500.h"
+	#define NONE_BMLZ
+#elif defined(ADIS16505)
+	#include "adis16505.h"
 #endif
 
 // Selection of series
@@ -51,8 +58,8 @@ THE SOFTWARE.
 //Standard Gravity Acceleration
 #define G_ACCL 9.80665
 
-#if defined(ADIS16470)|defined(ADIS16475)|defined(ADIS16477)
-	#define ADIS1647X
+#if defined(ADIS16495)
+	#define ADIS1649X
 #endif
 
 #endif /* INC_SELECT_SENSOR_H_ */

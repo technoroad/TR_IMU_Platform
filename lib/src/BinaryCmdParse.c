@@ -42,7 +42,7 @@ void BinaryCmdParse(char* cmd,u32 len)
 		U_putd(buf,2);
 
 	}else if(cmd[0] == 0x61){ // Data manipulation command
-#if defined(ADIS16495)
+#if defined(ADIS1649X)
 		if(cmd[1] == PAGE0_BURST_CMD){   //Burst mode
 			u16 rb[18];
 			memset(rb,0,sizeof(rb));

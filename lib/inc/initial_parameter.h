@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 #include <libraries.h>
 
-#define VERSION 0x20200304		// Version
+#define VERSION 0x20200608		// Version
 #define gain_p_init 1.0				// Kp gain
 #define gain_i_init 0.1				// Ki gain
 #define send_cycle_ms_init 10		//Send cycle[ms]
@@ -41,6 +41,10 @@ THE SOFTWARE.
 #define startup_time_s_init 90;		// 90[s]
 #elif defined(ADIS16495)
 #define startup_time_s_init 40;		// 40[s]
+#elif defined(ADIS16500)
+#define startup_time_s_init 120;		// 120[s]
+#elif defined(ADIS16505)
+#define startup_time_s_init 120;		// 120[s]
 #endif
 
 #define CSUM_SIZE 1
