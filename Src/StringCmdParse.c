@@ -60,6 +60,7 @@ static bool GET_SENSI_func();
 static bool GET_BOARD_NAME_func();
 static bool GET_STATUS_func();
 static bool SET_STARTUP_TIME_func();
+static bool SET_FORMAT_func();
 
 //Command parse processing
 void StringCmdParse( char c){
@@ -174,6 +175,10 @@ void StringCmdParse( char c){
 		}else if(strcmp(words[0] ,"SET_STARTUP_TIME") ==0){
 			if(!SET_STARTUP_TIME_func()){
 				U_puts("ERROR_STARTUP_TIME\r\n");
+			}
+		}else if(strcmp(words[0] ,"SET_FORMAT") ==0){
+			if(!SET_FORMAT_func()){
+				U_puts("ERROR_SET_FORMAT\r\n");
 			}
 		}else if(strcmp(words[0] ,"start") ==0){
 			SendStart();
@@ -415,7 +420,9 @@ static bool DUMP_PARAM_func(){
 	str_concat(buf,str_putlf(Params.gain_p ,5));str_concat(buf,",");
 	str_concat(buf,str_putlf(Params.gain_i ,5));str_concat(buf,",");
 	str_concat(buf,str_putn2(Params.send_cycle_ms));str_concat(buf,",");
-	str_concat(buf,str_putn2(Params.startup_time_s));str_concat(buf,"\r\n");
+	str_concat(buf,str_putn2(Params.startup_time_s));
+
+	str_concat(buf,"\r\n");
 	U_puts(buf);
 
 	return true;
@@ -502,7 +509,7 @@ static bool GET_FORMAT_func(){
 				"X_ACC_HEX,Y_ACC_HEX,Z_ACC_HEX,CSUM");
 		break;
 	case GYRO_ACC_BinaryData:
-		return false;
+		str_concat(buf,"Binary");
 		break;
 	case YawPitchRoll_ACC:
 		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg],X_ACC[g],Y_ACC[g],Z_ACC[g]");
@@ -582,6 +589,49 @@ static bool SET_STARTUP_TIME_func(){
 	str_concat(buf,"SET_STARTUP_TIME,");
 	str_concat(buf,str_putn2(Params.startup_time_s));str_concat(buf,"\r\n");
 	U_puts(buf);
+
+	return true;
+}
+
+bool SET_FORMAT_func(){
+	char buf[128];
+	memset(buf,0,sizeof(buf));
+
+	if(!IsDecString(words[1]))return false;
+
+	u8 format = DecStringToDec(words[1]);
+
+	str_concat(buf,"SET_FORMAT,");
+
+	switch(format){
+	case YawPitchRoll:
+		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg]");
+		break;
+	case GYRO_Degree:
+		str_concat(buf,"X_GYRO[deg/s],Y_GYRO[deg/s],Z_GYRO[deg/s]");
+		break;
+	case GYRO_ACC_HexData:
+		str_concat(buf,"X_GYRO_HEX,Y_GYRO_HEX,Z_GYRO_HEX,"
+				"X_ACC_HEX,Y_ACC_HEX,Z_ACC_HEX,CSUM");
+		break;
+	case GYRO_ACC_BinaryData:
+		str_concat(buf,"Binary");
+		break;
+	case YawPitchRoll_ACC:
+		str_concat(buf,"YAW[deg],PITCH[deg],ROLL[deg],X_ACC[g],Y_ACC[g],Z_ACC[g]");
+		break;
+	case GYRO_ACC_TEMP:
+		str_concat(buf,"X_GYRO[rad/s],Y_GYRO[rad/s],Z_GYRO[rad/s],X_ACC[g],Y_ACC[g],Z_ACC[g],TEMP[deg]");
+		break;
+	default:
+		return false;
+		break;
+	}
+
+	str_concat(buf,"\r\n");
+	U_puts(buf);
+
+	Set_Format(format);
 
 	return true;
 }
