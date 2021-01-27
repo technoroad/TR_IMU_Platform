@@ -108,3 +108,7 @@ void SPI_NonBloking_wr_word(uint16_t wb,uint16_t *rb){
 
 	rb[0] = rdat[0] | (rdat[1] <<8);
 }
+
+void SPI_NonBloking_wr_array(uint8_t *tx, uint8_t *rx, uint16_t size){
+	HAL_SPI_TransmitReceive(SPI, tx, rx, size, TIMEOUT);
+}

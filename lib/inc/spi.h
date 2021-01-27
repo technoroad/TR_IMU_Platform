@@ -35,5 +35,6 @@ void SPI_read_bytes(uint8_t *pdata, uint16_t length);
 void SPI_read_words(uint16_t *pdata, uint16_t length);
 void SPI_Bloking_wr_word(uint16_t wb,uint16_t *rb);
 void SPI_NonBloking_wr_word(uint16_t wb,uint16_t *rb);
+void SPI_NonBloking_wr_array(uint8_t *tx, uint8_t *rx, uint16_t size);
 
 #endif /* SPI_H_ */

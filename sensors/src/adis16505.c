@@ -36,6 +36,11 @@ static double gyro_raw[3],acc_raw[3];
 // Delay per data of SPI communication [us]
 static u32 tSTALL =16;
 
+//32-bit Burst command packet with trigger word embedded
+uint8_t ADIS_Burst_Packet [34] = {0x00,0x68,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+
+uint8_t ADIS_Burst_Packet_Size = 34;
+
 #if defined(_1BMLZ)
 	static double GyroSensitivity = 10485760.0;
 	static double AcclSensitivity = 26756268.0;
@@ -58,17 +63,8 @@ void ADIS_INIT(void){
 	LD1_OFF;
 
 	// Check if specified sensor is connected
-	int i;
-	for(i=0;i<10;i++){
-
-		if(ADIS_VerificationProductId()){
-			break;
-		}
-		HAL_Delay(1);
-	}
-
-	if(i ==10){
-		// Stop here if different sensor
+	/*
+	if(!ADIS_VerificationProductId()){
 		while(1){
 			LD3_ON;
 			U_puts("ERROR_PRODUCT_ID_INCORRECT\r\n");
@@ -76,7 +72,10 @@ void ADIS_INIT(void){
 			LD3_OFF;
 			HAL_Delay(500);
 		}
-	}
+	}*/
+
+	// Enable 32-bit burst output
+	ADIS_Set32bitBurstConfig();
 
 	// Hard filter setting in sensor
 	ADIS_HardwareFilterSelect(1);
@@ -85,6 +84,7 @@ void ADIS_INIT(void){
 // Check if specified sensor is connected
 u8 ADIS_VerificationProductId(void){
 	u16 id =ADIS_Bloking_RegRead(PROD_ID);
+	id =ADIS_Bloking_RegRead(PROD_ID);
 
 	if(id != PRODUCT_ID){
 		return false;
@@ -146,18 +146,62 @@ void ADIS_32bit_READ(uint16_t *rb){
 	rb[j++] = ADIS_NoBloking_RegRead(0x00);
 }
 
-// Get acceleration and angular velocity from the value read by ADIS_32bit_READ()
-int ADIS_32bitIMUConvert(u16 *buf,double *gyro,double *acc){
-	//Save raw data of angular velocity and acceleration
-	for(int i=0; i<3;i++){
-		gyro_hex[i] =((buf[i*2+2] << 16) | buf[i*2+1]);
-		gyro[i] =(s32)gyro_hex[i] / GyroSensitivity*M_PI/180.0;
-		gyro_raw[i] =gyro[i];
+bool ADIS_Set32bitBurstConfig(void) {
+	u16 tmp = ADIS_Bloking_RegRead(MSC_CTRL);
+	tmp |= 1 << 9;
+	ADIS_RegWrite_16bit(MSC_CTRL, tmp);
+	tmp = ADIS_Bloking_RegRead(MSC_CTRL);
+	HAL_Delay(1); //This delay allows the setting to take hold
+	return true;
+}
 
-		acc_hex[i] =((buf[i*2+8] << 16) | buf[i*2+7]);
-		acc[i] =(s32)acc_hex[i] / AcclSensitivity;
-		acc_raw[i] =acc[i] / G_ACCL;
+void ADIS_32bit_BURST_READ(uint16_t *rb) {
+	uint8_t rxBuf [ADIS_Burst_Packet_Size];
+	// Transact the entire burst buffer
+	SPI_enable_nss();
+	SPI_NonBloking_wr_array(ADIS_Burst_Packet, rxBuf, ADIS_Burst_Packet_Size/2); //Packet size is half of burst message because SPI is configured for 16-bit transactions
+	SPI_disable_nss();
+	// Only extract the gyro, accel, and temperature values
+	volatile int cnt = 0;
+	for (int i = 0; i < 26; i+=2) {
+		rb[cnt] = ((rxBuf[i + 5] << 8) | rxBuf[i + 4]);
+		cnt++;
 	}
+}
+
+// Get acceleration and angular velocity from the value read by ADIS_32bit_READ()
+int ADIS_32bitIMUConvert(u16 *buf, double *gyro, double *acc){
+	//Save raw data of angular velocity and acceleration
+
+	/* Process XG */
+	gyro_hex[0] = ((buf[1] << 16) | buf[0]);
+	gyro[0] = (s32)gyro_hex[0] / GyroSensitivity*M_PI/180.0;
+	gyro_raw[0] = gyro[0];
+
+	/* Process YG */
+	gyro_hex[1] = ((buf[3] << 16) | buf[2]);
+	gyro[1] = (s32)gyro_hex[1] / GyroSensitivity*M_PI/180.0;
+	gyro_raw[1] = gyro[1];
+
+	/* Process ZG */
+	gyro_hex[2] = ((buf[5] << 16) | buf[4]);
+	gyro[2] = (s32)gyro_hex[2] / GyroSensitivity*M_PI/180.0;
+	gyro_raw[2] = gyro[2];
+
+	/* Process XA */
+	acc_hex[0] = ((buf[7] << 16) | buf[6]);
+	acc[0] = (s32)acc_hex[0] / AcclSensitivity;
+	acc_raw[0] = acc[0] / G_ACCL;
+
+	/* Process YA */
+	acc_hex[1] = ((buf[9] << 16) | buf[8]);
+	acc[1] = (s32)acc_hex[1] / AcclSensitivity;
+	acc_raw[1] = acc[1] / G_ACCL;
+
+	/* Process XA */
+	acc_hex[2] = ((buf[11] << 16) | buf[10]);
+	acc[2] = (s32)acc_hex[2] / AcclSensitivity;
+	acc_raw[2] = acc[2] / G_ACCL;
 
 	double n = sqrt(acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
 	if(n>0.0001){
@@ -190,7 +234,7 @@ void ADIS_GetRawData(double *p_gyro, double *p_acc){
 
 // Get temperature from the value read by ADIS_32bit_READ()
 double ADIS_16bitTempConvert(u16 *buf){
-	return (double)((int16_t)buf[13])*0.1;
+	return (double)((int16_t)buf[12])*0.1;
 }
 
 // SPI reading on blocking
@@ -230,13 +274,13 @@ u16 ADIS_NoBloking_RegRead(u8 addr){
 
 // Write 8bit data to register
 int ADIS_RegWrite_8bit(u8 regAddr, s8 regData){
+	uint16_t txBuf;
 	// Write register address and data
-	uint16_t addr = ((regAddr | 0x80) << 8); // Toggle sign bit, and check that the address is 8 bits
-	uint16_t data = (addr | (regData & 0xFF)); // OR Register address (A) with data(D) (AADD)
+	txBuf = ((regAddr | 0x80) << 8) | (regData & 0xFF);
 
 	// Write 8bit data to SPI bus
 	SPI_enable_nss();
-	SPI_write_word(data);
+	SPI_write_word(txBuf);
 	SPI_disable_nss();
 
 	delay_us(tSTALL);
@@ -246,8 +290,9 @@ int ADIS_RegWrite_8bit(u8 regAddr, s8 regData){
 
 // Write 16bit data to register
 int ADIS_RegWrite_16bit(u8 regAddr, s16 regData){
-	ADIS_RegWrite_8bit(regAddr,regData & 0xFF);
-	ADIS_RegWrite_8bit(regAddr | 0x01,(regData >> 8) & 0xFF);
+
+	ADIS_RegWrite_8bit(regAddr, regData & 0xFF);
+	ADIS_RegWrite_8bit(regAddr + 1, ((regData >> 8) & 0xFF)) ;
 
 	return 1;
 }

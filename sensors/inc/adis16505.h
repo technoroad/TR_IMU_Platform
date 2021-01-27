@@ -113,6 +113,9 @@ u16 ADIS_NoBloking_RegRead(u8 addr);
 int ADIS_RegWrite_8bit(u8 regAddr, s8 regData);
 int ADIS_RegWrite_16bit(u8 regAddr, s16 regData);
 
+void ADIS_32bit_BURST_READ(uint16_t *rb);
+bool ADIS_Set32bitBurstConfig(void);
+
 u8 ADIS_VerificationProductId(void);
 
 void ADIS_Get_SensSensi(double *GyroSensi,double *AccSensi);

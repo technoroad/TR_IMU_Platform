@@ -153,7 +153,8 @@ void Get_SENS_VAL(double *p_gyro,double *p_acc){
 	memset(rbuf,0,sizeof(rbuf));
 
 	// Get value
-	ADIS_32bit_READ(rbuf);
+	//ADIS_32bit_READ(rbuf);
+	ADIS_32bit_BURST_READ(rbuf);
 
 	// Calculation of angular velocity and acceleration
 	ADIS_32bitIMUConvert(rbuf,p_gyro,p_acc);
