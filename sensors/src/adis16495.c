@@ -175,7 +175,7 @@ bool ADIS_HardwareFilterSelect(int gx_f, int gy_f, int gz_f, int ax_f, int ay_f,
 		if ((bank0_arr[i] <= FILT_BANK_D) && (bank0_arr[i] >= FILT_BANK_A)) {
 			filt_bnk0 |= (u16)((bank0_arr[i] | 0x0004) << (i*3));
 		}else{
-			filt_bnk0 |= (u16)((bank0_arr[i] & 0xFFFB) << (i*3));
+			filt_bnk0 |= (u16)((bank0_arr[i] & 0x0003) << (i*3));
 		}
 	}
 
@@ -183,7 +183,7 @@ bool ADIS_HardwareFilterSelect(int gx_f, int gy_f, int gz_f, int ax_f, int ay_f,
 	if ((az_f <= FILT_BANK_D) && (az_f >= FILT_BANK_A)) {
 		filt_bnk1 |= (u16)(az_f | 0x0004);
 	}else{
-		filt_bnk1 |= (u16)(az_f & 0xFFFB);
+		filt_bnk1 |= (u16)(az_f & 0x0003);
 	}
 
 	ADIS_RegWrite_16bit(PAGE_ID,PAGE3);
