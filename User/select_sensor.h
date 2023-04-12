@@ -29,9 +29,9 @@
 //#define ADIS16470
 //#define ADIS16475
 //#define ADIS16477
-//#define ADIS16495
+#define ADIS16495
 //#define ADIS16500
-#define ADIS16505
+//#define ADIS16505
 
 // Selection of series
 #if defined(ADIS16470) | defined(ADIS16500)
