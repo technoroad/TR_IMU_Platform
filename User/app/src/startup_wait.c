@@ -56,6 +56,8 @@ void StartupWait() {
       IMU_BiasCorrectionUpdate();
       IMU_UpdateGyroBias();
 
+#if 0
+      // The bias correction has been removed in adis1650X.
       ImuDataList *list = IMU_GetDataList();
 
       double sum = 0;
@@ -70,6 +72,12 @@ void StartupWait() {
           StartupWaitTerminate();
         }
       }
+#else
+      // Wait until the remaining time reaches zero.
+      if (!GetStartupWaitTimeLeft()) {
+        StartupWaitTerminate();
+      }
+#endif
     }
     kPastTick = SEC_TICK;
   } else {

@@ -29,8 +29,9 @@
 //#define ADIS16470
 //#define ADIS16475
 //#define ADIS16477
-#define ADIS16495
-//#define ADIS16505
+//#define ADIS16495
+//#define ADIS16500
+#define ADIS16505
 
 // Selection of series
 #if defined(ADIS16470) | defined(ADIS16500)
@@ -53,6 +54,11 @@
 #define ADIS1647X
 #define AVAILABLE_32BIT_BURST
 #define SUPPORT_BURST_FIRM_REV 0x134
+#elif defined(ADIS16500)
+#include "adis16500.h"
+#define ADIS1647X
+#define AVAILABLE_32BIT_BURST
+#define SUPPORT_BURST_FIRM_REV 0x000
 #elif defined(ADIS16505)
 #include "adis16505.h"
 #define ADIS1647X
