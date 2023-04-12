@@ -1,9 +1,4 @@
-#ignore
-*.o
-*.d
-*.map
-*.elf
-*.su
-*.list
-*.pref
-.mxproject
+.settings
+[Rr]elease
+[Dd]ebug
+.launch
