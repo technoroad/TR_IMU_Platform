@@ -5,15 +5,17 @@
 
 Currently supported devices are:
 
-- [ADIS16470/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16470.html)
-  - Wide Dynamic Range Mini MEMS IMU
+- Precision, Miniature MEMs IMU
+
+  - [ADIS16470/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16470.html)
+  - [ADSI16475-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16475.html)
+  - [ADSI16477-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16477.html)
+  - [ADSI16500/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16500.html)
+  - [ADSI16505-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16505.html)
   
-- [ADSI16475-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16475.html)
-  - Precision, Miniature MEMs IMU
-  
-- [ADIS16495-2](https://www.analog.com/en/products/adis16495.html)
-  - Higher grade MEMS IMU
-  
+- Higher grade MEMS IMU
+  - [ADIS16495-2](https://www.analog.com/en/products/adis16495.html)
+
 The default is dedicated to ADIS16495-2, so the firmware needs to be updated if another sensor is used.
 
 Support for other sensors is possible by adding a library of sensors.
@@ -43,12 +45,14 @@ ADIS1647X / PCB series can be installed by using optional parts.
 There are two types of firmware updates.
 
   - Write from USB(DFU)
-    - When the 8th CONF switch is turned on and the power is turned on, the DFU mode is entered.
+    - When the 6th CONF switch is turned on and the power is turned on, the DFU mode is entered.
     - DFU can write firmware from [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html).
-    - Download the sensor firmware [here](https://github.com/technoroad/TR_IMU_Platform/releases). 
+    - Download the sensor firmware [here](https://github.com/technoroad/TR-IMU1647X/releases). 
   - Write or debug with ST-LINK
     - Writing and debugging are possible by connecting the MIPI-10 connector and ST-LINK.The following two are required.
+      - [STLINK-V3SET](https://www.digikey.jp/ja/products/detail/stmicroelectronics/STLINK-V3SET/9636028)
+        - V3SET can be directly connected to [TR-IMU1647X](https://github.com/TR-Hiroki-Kobayashi/TR-IMU1647X) or [TR_IMU_Platform](https://github.com/technoroad/TR_IMU_Platform).
       - [ST-LINK/V2](https://www.digikey.jp/product-detail/ja/stmicroelectronics/ST-LINK-V2/497-10484-ND/2214535)
-      - [ARM-JTAG-20-10](https://www.digikey.jp/product-detail/ja/olimex-ltd/ARM-JTAG-20-10/1188-1016-ND/3471401)
+        - Requires [ARM-JTAG-20-10](https://www.digikey.jp/product-detail/ja/olimex-ltd/ARM-JTAG-20-10/1188-1016-ND/3471401) for V2
     - [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html) or [ST-LINK Utility](https://www.st.com/en/development-tools/stsw-link004.html) can be used for writing.
-    - When debugging, you need to import and build the source code after installing [TrueSTUDIO](https://www.st.com/ja/development-tools/truestudio.html).
+    - When debugging, you need to import and build the source code after installing [STM32CubeIDE](https://www.st.com/ja/development-tools/stm32cubeide.html) ~~[TrueSTUDIO]~~.
