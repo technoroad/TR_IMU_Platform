@@ -1,3 +1,4 @@
+[![Latest Release](https://img.shields.io/github/v/release/technoroad/TR_IMU_Platform?include_prereleases&label=Latest%20Release)](https://github.com/technoroad/TR_IMU_Platform/releases/latest)
 # TR_IMU_Platform
 “TR_IMU_Platform” is an Analog Devices IMU sensor that can be easily connected to ROS and output high-precision attitude angles.
 
@@ -56,3 +57,9 @@ There are two types of firmware updates.
         - Requires [ARM-JTAG-20-10](https://www.digikey.jp/product-detail/ja/olimex-ltd/ARM-JTAG-20-10/1188-1016-ND/3471401) for V2
     - [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html) or [ST-LINK Utility](https://www.st.com/en/development-tools/stsw-link004.html) can be used for writing.
     - When debugging, you need to import and build the source code after installing [STM32CubeIDE](https://www.st.com/ja/development-tools/stm32cubeide.html) ~~[TrueSTUDIO]~~.
+# Latest Release
+
+[![Latest Release](https://img.shields.io/github/v/release/technoroad/TR_IMU_Platform?include_prereleases&label=Latest%20Release)](https://github.com/technoroad/TR_IMU_Platform/releases/latest)
+
+You can access the latest release from [here](https://github.com/technoroad/TR_IMU_Platform/releases). For more details and changelog, please refer to the [Release Notes](https://github.com/technoroad/TR_IMU_Platform/releases).
+
