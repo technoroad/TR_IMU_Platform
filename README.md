@@ -48,7 +48,7 @@ There are two types of firmware updates.
   - Write from USB(DFU)
     - When the 6th CONF switch is turned on and the power is turned on, the DFU mode is entered.
     - DFU can write firmware from [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html).
-    - Download the sensor firmware [here](https://github.com/technoroad/TR-IMU1647X/releases). 
+    - Download the sensor firmware [here](https://github.com/technoroad/TR_IMU_Platform/releases/latest). 
   - Write or debug with ST-LINK
     - Writing and debugging are possible by connecting the MIPI-10 connector and ST-LINK.The following two are required.
       - [STLINK-V3SET](https://www.digikey.jp/ja/products/detail/stmicroelectronics/STLINK-V3SET/9636028)
