@@ -33,12 +33,15 @@
 #if defined(_1BMLZ)
 #define GYRO_SENSITIVITY (double)10485760.0
 #define ACCL_SENSITIVITY (double)52428800.0
+#define GYRO_NOISE_DENSITY 0.003
 #elif defined(_2BMLZ)
 #define GYRO_SENSITIVITY (double)2621440.0
 #define ACCL_SENSITIVITY (double)52428800.0
+#define GYRO_NOISE_DENSITY 0.003
 #elif defined(_3BMLZ)
 #define GYRO_SENSITIVITY (double)655360.0
 #define ACCL_SENSITIVITY (double)52428800.0
+#define GYRO_NOISE_DENSITY 0.007
 #endif
 
 #define BURST_CMD 0x68 //burst command

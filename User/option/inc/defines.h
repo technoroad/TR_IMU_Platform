@@ -66,9 +66,11 @@ typedef volatile struct {
   double gain_i;
   uint32_t transmit_prescaler;
   uint32_t startup_time;  // [s]
-  uint32_t auto_average_time;  // [s]
-  double vibration_threshold;  // [m/s^2]
-  uint32_t auto_average_enable;
+  uint32_t auto_update_enable;
+  uint32_t auto_update_time;
+  uint32_t stationary_observe_enable;
+  double stational_accl_thresh;
+  double stational_gyro_thresh;
   uint16_t csum;
 } __attribute__((__aligned__(2)))__attribute__((packed)) BoardParameterList;
 

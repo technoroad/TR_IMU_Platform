@@ -73,7 +73,16 @@ static bool GET_BOARD_NAME_func();
 static bool GET_STATUS_func();
 static bool SET_STARTUP_TIME_func();
 static bool SET_FORMAT_func();
-static bool AUTO_AVG_ON_func();
+static bool AUTO_UPDATE_ON_func();
+static bool AUTO_UPDATE_OFF_func();
+static bool SET_AUTO_UPDATE_TIME_func();
+static bool GET_AUTO_UPDATE_TIME_func();
+static bool STATIONAL_OBSERVE_ON_func();
+static bool STATIONAL_OBSERVE_OFF_func();
+static bool SET_THRESHOLD_ACCL_func();
+static bool SET_THRESHOLD_GYRO_func();
+static bool GET_THRESHOLD_ACCL_func();
+static bool GET_THRESHOLD_GYRO_func();
 static bool HELP_func();
 
 /* Global variables ----------------------------------------------------------*/
@@ -201,9 +210,45 @@ void StringCmdParse(char c) {
       if (!SET_FORMAT_func()) {
         COMM_puts("ERROR_SET_FORMAT\r\n");
       }
-    } else if (strcmp(kWords[0], "AUTO_AVG_ON") == 0) {
-      if (!AUTO_AVG_ON_func()) {
-        COMM_puts("ERROR_AUTO_AVG_ON\r\n");
+    } else if (strcmp(kWords[0], "AUTO_UPDATE_ON") == 0) {
+      if (!AUTO_UPDATE_ON_func()) {
+        COMM_puts("ERROR_AUTO_UPDATE_ON\r\n");
+      }
+    } else if (strcmp(kWords[0], "AUTO_UPDATE_OFF") == 0) {
+      if (!AUTO_UPDATE_OFF_func()) {
+        COMM_puts("ERROR_AUTO_UPDATE_OFF\r\n");
+      }
+    } else if (strcmp(kWords[0], "SET_AUTO_UPDATE_TIME") == 0) {
+      if (!SET_AUTO_UPDATE_TIME_func()) {
+        COMM_puts("ERROR_SET_AUTO_UPDATE_TIME\r\n");
+      }
+    } else if (strcmp(kWords[0], "GET_AUTO_UPDATE_TIME") == 0) {
+      if (!GET_AUTO_UPDATE_TIME_func()) {
+        COMM_puts("ERROR_GET_AUTO_UPDATE_TIME\r\n");
+      }
+    } else if (strcmp(kWords[0], "STATIONAL_OBSERVE_ON") == 0) {
+      if (!STATIONAL_OBSERVE_ON_func()) {
+        COMM_puts("ERROR_STATIONAL_OBSERVE_ON\r\n");
+      }
+    } else if (strcmp(kWords[0], "STATIONAL_OBSERVE_OFF") == 0) {
+      if (!STATIONAL_OBSERVE_OFF_func()) {
+        COMM_puts("ERROR_STATIONAL_OBSERVE_OFF\r\n");
+      }
+    } else if (strcmp(kWords[0], "SET_THRESHOLD_ACCL") == 0) {
+      if (!SET_THRESHOLD_ACCL_func()) {
+        COMM_puts("ERROR_SET_THRESHOLD_ACCL\r\n");
+      }
+    } else if (strcmp(kWords[0], "SET_THRESHOLD_GYRO") == 0) {
+      if (!SET_THRESHOLD_GYRO_func()) {
+        COMM_puts("ERROR_SET_THRESHOLD_GYRO\r\n");
+      }
+    } else if (strcmp(kWords[0], "GET_THRESHOLD_ACCL") == 0) {
+      if (!GET_THRESHOLD_ACCL_func()) {
+        COMM_puts("ERROR_GET_THRESHOLD_ACCL\r\n");
+      }
+    } else if (strcmp(kWords[0], "GET_THRESHOLD_GYRO") == 0) {
+      if (!GET_THRESHOLD_GYRO_func()) {
+        COMM_puts("ERROR_GET_THRESHOLD_GYRO\r\n");
       }
     } else if (strcmp(kWords[0], "") == 0) {
     } else {
@@ -265,6 +310,11 @@ bool BIAS_func() {
 
 bool FILTER_func() {
   MKAE_MS2016_FilterReset();
+
+  ImuDataList *list = IMU_GetDataList();
+  list->yaw = 0;
+  list->pitch = 0;
+  list->roll = 0;
 
   COMM_puts("filter\r\n");
 
@@ -691,28 +741,134 @@ bool SET_FORMAT_func() {
   return true;
 }
 
-bool AUTO_AVG_ON_func() {
+bool AUTO_UPDATE_ON_func() {
+  if (kWordLenth != 1)
+    return false;
+
+  gBoard.auto_update_enable = true;
+  IMU_SetBiasCorrectionTime(gBoard.auto_update_time);
+
+  str_concat(kMsgBuf, "AUTO_UPDATE_ON\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool AUTO_UPDATE_OFF_func() {
+  if (kWordLenth != 1)
+    return false;
+
+  gBoard.auto_update_enable = false;
+
+  str_concat(kMsgBuf, "AUTO_UPDATE_OFF\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool STATIONAL_OBSERVE_ON_func(){
+  if (kWordLenth != 1)
+    return false;
+
+  gBoard.stationary_observe_enable = true;
+
+  str_concat(kMsgBuf, "STATIONAL_OBSERVE_ON\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool SET_AUTO_UPDATE_TIME_func(){
+  if (kWordLenth != 2)
+    return false;
+
   if (!IsDecString(kWords[1]))
     return false;
 
-#if 0
-  uint32_t flg = DecStringToDec(kWords[1]);
+  uint16_t auto_update_time = DecStringToDec(kWords[1]);
+  gBoard.auto_update_time = auto_update_time;
 
-  if (flg != 0) {
-    gBoard.auto_average_enable = true;
-    IMU_SetAverageTime(gBoard.auto_average_time);
-  }else{
-    gBoard.auto_average_enable = false;
-  }
-#endif
-
-  str_concat(kMsgBuf, "AUTO_AVG_ON,");
-  str_concat(kMsgBuf, str_putn2(gBoard.auto_average_enable));
+  str_concat(kMsgBuf, "SET_AUTO_UPDATE_TIME,");
+  str_concat(kMsgBuf, str_putn2(gBoard.auto_update_time));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
   return true;
 }
+
+bool GET_AUTO_UPDATE_TIME_func(){
+  str_concat(kMsgBuf, "GET_AUTO_UPDATE_TIME,");
+  str_concat(kMsgBuf, str_putn2(gBoard.auto_update_time));
+  str_concat(kMsgBuf, "\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool STATIONAL_OBSERVE_OFF_func(){
+  if (kWordLenth != 1)
+    return false;
+
+  gBoard.stationary_observe_enable = false;
+
+  str_concat(kMsgBuf, "STATIONAL_OBSERVE_OFF\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool SET_THRESHOLD_ACCL_func() {
+  if (kWordLenth != 2)
+    return false;
+
+  if (!IsDoubleString(kWords[1]))
+    return false;
+
+  gBoard.stational_accl_thresh = DoubleStringToDouble(kWords[1]);
+
+  str_concat(kMsgBuf, "SET_THRESHOLD_ACCL,");
+  str_concat(kMsgBuf, str_putlf(gBoard.stational_accl_thresh, 5));
+  str_concat(kMsgBuf, "\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool SET_THRESHOLD_GYRO_func() {
+  if (kWordLenth != 2)
+    return false;
+
+  if (!IsDoubleString(kWords[1]))
+    return false;
+
+  gBoard.stational_gyro_thresh = DoubleStringToDouble(kWords[1]);
+
+  str_concat(kMsgBuf, "SET_THRESHOLD_GYRO,");
+  str_concat(kMsgBuf, str_putlf(gBoard.stational_gyro_thresh, 5));
+  str_concat(kMsgBuf, "\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool GET_THRESHOLD_ACCL_func(){
+  str_concat(kMsgBuf, "GET_THRESHOLD_ACCL,");
+  str_concat(kMsgBuf, str_putlf(gBoard.stational_accl_thresh, 3));
+  str_concat(kMsgBuf, "\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
+bool GET_THRESHOLD_GYRO_func(){
+  str_concat(kMsgBuf, "GET_THRESHOLD_GYRO,");
+  str_concat(kMsgBuf, str_putlf(gBoard.stational_gyro_thresh, 3));
+  str_concat(kMsgBuf, "\r\n");
+  COMM_puts(kMsgBuf);
+
+  return true;
+}
+
 
 bool HELP_func() {
   SendStop();

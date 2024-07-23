@@ -29,6 +29,18 @@
 
 /* Private define ------------------------------------------------------------*/
 #ifdef MAHONY
+#elif defined(MASUYA)
+#define FREQ_GT 100.0
+#define FREQ_ACC 3.0
+#define FERQ_GYRO 10.0
+#define FREQ_RELAX 90.0
+#endif
+#define GYRO_B 0.003  // The value for converting noise density to a threshold.
+
+/* Private macro -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+#ifdef MAHONY
 mkAE_IMU mkae_Mah;
 static double Kp_Mah = 1.0, Ki_Mah = 0.1;
 static double wA_Mah = 1.0;
@@ -36,18 +48,12 @@ static double gyro_mah[3], acc_mah[3];
 #elif defined(MASUYA)
 static mkAE_IMU_MS2016 mkae_ms;
 static double wA_ms = 1;
-#define FREQ_GT 100.0
-#define FREQ_ACC 3.0
-#define FERQ_GYRO 30.0
-#define FREQ_RELAX 90.0
 #endif
-
-/* Private macro -------------------------------------------------------------*/
-
-/* Private variables ---------------------------------------------------------*/
+static double moved_thresh = GYRO_NOISE_DENSITY + GYRO_B;
 
 /* Private function prototypes -----------------------------------------------*/
-void Get6AxisData(double *p_gyro, double *p_acc);
+void Get6AxisData(double *gyro, double *acc);
+void CheckBiasAutoUpdate();
 
 /* Global variables ----------------------------------------------------------*/
 extern BoardParameterList gBoard;
@@ -83,34 +89,59 @@ void MKAE_MS2016_UpdateAngle() {
 
   // Calculate angular velocity and acceleration values.
   Get6AxisData(gyro, acc);
+  CheckBiasAutoUpdate();
 
-#ifdef MAHONY
-  // Output of attitude matrix
-  mkAE_IMU_MahonyECF_AM(&mkae_Mah, gyro, acc, wA_Mah,  //
-                        Kp_Mah, Ki_Mah, CTRL_PERIOD);
-  // Output of Euler angles from attitude matrix
-  mk_Cmpt_ZYXangle_AM(mkae_Mah.m_att, angle);
-
-  // Save value only for MAHONY
-  for (int i = 0; i < 3; i++) {
-    gyro_mah[i] = gyro[i];
-    acc_mah[i] = acc[i];
+  // Determine whether movement has occurred using the gyro value.
+  bool moved = !gBoard.stationary_observe_enable;
+  for(int i=0;i < 3;i++){
+    if(fabs(gyro[i]) > moved_thresh){
+      moved = true;
+    }
   }
 
+  // Get data structure pointer
+  ImuDataList *list = IMU_GetDataList();
+
+  // Calculate only when it moves.
+  if(moved){
+#ifdef MAHONY
+    // Output of attitude matrix
+    mkAE_IMU_MahonyECF_AM(&mkae_Mah, gyro, acc, wA_Mah,  //
+                          Kp_Mah, Ki_Mah, CTRL_PERIOD);
+    // Output of Euler angles from attitude matrix
+    mk_Cmpt_ZYXangle_AM(mkae_Mah.m_att, angle);
+
+    // Save value only for MAHONY
+    for (int i = 0; i < 3; i++) {
+      gyro_mah[i] = gyro[i];
+      acc_mah[i] = acc[i];
+    }
+
 #elif defined(MASUYA)
-  // Output of attitude matrix
-  mkAE_IMU_MS2016_CF_AM(&mkae_ms, gyro, acc, wA_ms, gBoard.gain_p,
-                        gBoard.gain_i,
-                        CTRL_PERIOD);
-  // Output of Euler angles from attitude matrix
-  mk_Cmpt_ZYXangle_AM(mkae_ms.mkae.m_att, angle);
+#if 0
+    // Output of quat
+    mkAE_IMU_MS2016_CF_Quat(&mkae_ms, gyro, acc, wA_ms, gBoard.gain_p,
+                          gBoard.gain_i,
+                          CTRL_PERIOD);
+    // Output of Euler angles from quat
+    mk_Cmpt_ZYXangle_Quat(mkae_ms.mkae.q_est,angle);
+
+#else
+    // Output of attitude matrix
+    mkAE_IMU_MS2016_CF_AM(&mkae_ms, gyro, acc, wA_ms, gBoard.gain_p,
+                          gBoard.gain_i,
+                          CTRL_PERIOD);
+
+    // Output of Euler angles from attitude matrix
+    mk_Cmpt_ZYXangle_AM(mkae_ms.mkae.m_att, angle);
+#endif
 #endif
 
-  // Output of yaw pitch roll from attitude matrix
-  ImuDataList *list = IMU_GetDataList();
-  list->yaw = angle[0] * 180.0 / M_PI;
-  list->pitch = angle[1] * 180.0 / M_PI;
-  list->roll = angle[2] * 180.0 / M_PI;
+    // Output of yaw pitch roll from attitude matrix
+    list->yaw = angle[0] * 180.0 / M_PI;
+    list->pitch = angle[1] * 180.0 / M_PI;
+    list->roll = angle[2] * 180.0 / M_PI;
+  }
 
   SystemError error = DetectSensorError(list->diag_stat);
   if (error != kNoneError) {
@@ -169,10 +200,9 @@ void MKAE_MS2016_SetParam(mkAE_IMU_MS2016 *mkae_ms) {
  * @brief  Calculate angular velocity and acceleration values.
  */
 void Get6AxisData(double *gyro, double *accl) {
-  IMU_Update6AxisData();
-//  IMU_UpdateGyroBias();
-
   ImuDataList *list = IMU_GetDataList();
+
+  IMU_Update6AxisData();
 
 #if defined(ADIS1647X)
   // Checksum judgment when burst read is enabled.
@@ -192,13 +222,13 @@ void Get6AxisData(double *gyro, double *accl) {
   }
 #endif
 
-  // Convert to acceleration[m/s2]
+  // value copy
   for (int i = 0; i < 3; i++) {
     gyro[i] = list->gyro.fpp[i];
-    accl[i] = list->accl.fpp[i] * STANDARD_GRAVITY;
+    accl[i] = list->accl.fpp[i];
   }
 
-  // Calculate acceleration synthesis[m/s2]
+  // Calculate acceleration synthesis
   double n = sqrt(accl[0] * accl[0] + accl[1] * accl[1] + accl[2] * accl[2]);
   if (n > 0.0001) {
     accl[0] /= n;
@@ -210,30 +240,37 @@ void Get6AxisData(double *gyro, double *accl) {
     accl[2] = 0;
   }
   list->accl_synthesis = n;
+}
 
-  if (gBoard.auto_average_enable) {
-    static double peak = 0;
+void CheckBiasAutoUpdate(){
+  ImuDataList *list = IMU_GetDataList();
+
+  // If no movement is detected for a certain period, update the bias.
+  if (gBoard.auto_update_enable) {
     static uint32_t cnt = 0;
     static uint32_t freq = (uint32_t) (1.0 / CTRL_PERIOD);
 
-    uint32_t avg_tick = freq * gBoard.auto_average_time;
+    uint32_t update_tick = freq * gBoard.auto_update_time;
     cnt++;
-    double vib = fabs(list->accl_synthesis - STANDARD_GRAVITY);
-    if (peak < vib) {
-      peak = vib;
-    }
 
-    if (vib >= gBoard.vibration_threshold) {
-      peak = 0;
+    double vib = fabs(list->accl_synthesis - 1.0);
+
+    // The counter is reset when the acceleration changes by more than the threshold value.
+    if(vib > gBoard.stational_accl_thresh){
       cnt = 0;
     }
 
-    list->vibration_peak = peak;
+    // The counter is reset when the gyro changes by more than the threshold.
+    for(int i=0; i < 3; i++){
+      if(fabs(list->gyro.fpp[i]) > gBoard.stational_gyro_thresh){
+        cnt = 0;
+      }
+    }
 
-    if (cnt > avg_tick) {
+    // When the counter exceeds the IMU averaging time, the bias is updated.
+    if (cnt > update_tick) {
       IMU_BiasCorrectionUpdate();
       cnt = 0;
-      peak = 0;
     }
   }
 }

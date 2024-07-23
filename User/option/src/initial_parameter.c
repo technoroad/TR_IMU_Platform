@@ -47,10 +47,11 @@ void InitializeParameters() {
   gBoard.gain_p = GAIN_P_INIT;
   gBoard.gain_i = GAIN_I_INIT;
   gBoard.transmit_prescaler = TRANSMIT_PRESCALER_INIT;
-  gBoard.startup_time = STARTUP_TIME_INIT
-  ;
-  gBoard.auto_average_time = AUTO_AVERAGE_TIME_INIT;
-  gBoard.vibration_threshold = VIBRATION_THRESHOLD_INIT;
-  gBoard.auto_average_enable = AUTO_AVERAGE_ENABLE_INIT;
+  gBoard.startup_time = STARTUP_TIME_INIT;
+  gBoard.auto_update_enable = AUTO_UPDATE_ENABLE_INIT;
+  gBoard.auto_update_time = AUTO_UPDATE_TIME_INIT;
+  gBoard.stationary_observe_enable = ST_OBSERVE_ENABLE_INIT;
+  gBoard.stational_accl_thresh = ST_ACCL_INIT;
+  gBoard.stational_gyro_thresh = ST_GYRO_INIT;
   gBoard.csum = Make16bitChecksum((uint8_t*) &gBoard, size - CSUM_SIZE);
 }

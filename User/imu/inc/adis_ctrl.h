@@ -33,6 +33,6 @@ void IMU_Update6AxisData();
 
 void IMU_BiasCorrectionUpdate(void);
 void IMU_SetHardwareFilter(int f0, int f1, int f2, int f3, int f4, int f5);
-void IMU_SetAverageTime(uint32_t sec);
+void IMU_SetBiasCorrectionTime(uint32_t sec);
 
 #endif /* INC_ADIS_CTRL_H_ */

@@ -133,8 +133,23 @@ void PushString(void) {
       arr[5] = list->gyro.fpp[2] - list->gyro_bias.fpp[2];
 
       OutputStringType1(arr, 6,6);
-#else
+#elif 1
       OutputStringType1((double*) list->gyro.fpp, 3, 3);
+#elif 1
+      double arr[6];
+      arr[0] = list->gyro.fpp[0];
+      arr[1] = list->gyro.fpp[1];
+      arr[2] = list->gyro.fpp[2];
+      arr[3] = list->test[0];
+      arr[4] = list->test[1];
+      arr[5] = list->test[2];
+      OutputStringType1(arr, 6,6);
+#elif 1
+      double arr[3];
+      arr[0] = list->accl_synthesis;
+      arr[1] = 0;
+      arr[2] = 0;
+      OutputStringType1(arr, 3,3);
 #endif
       break;
     }

@@ -67,8 +67,8 @@ bool IMU_Initialization(void) {
   DelayMillisecond(500);
 
   // Sets the bias collection time
-  if (gBoard.auto_average_enable) {
-    IMU_SetAverageTime(gBoard.auto_average_time);
+  if (gBoard.auto_update_enable) {
+    IMU_SetBiasCorrectionTime(gBoard.auto_update_time);
   }
 
 // Perform burst read only if 32bit read capability is present.
@@ -186,12 +186,12 @@ void IMU_SetHardwareFilter(int f0, int f1, int f2, int f3, int f4, int f5) {
 /**
  * @brief  Sets the BiasCorrection time.
  */
-void IMU_SetAverageTime(uint32_t sec) {
+void IMU_SetBiasCorrectionTime(uint32_t sec) {
   double tb = (double) sec / 64.0;
   double tc = tb * CONVERSION_RATE;
   uint32_t multi = 0;
-  while (tc > 1.0) {
-    tc /= 2;
+  while (tc >= 2.0) {
+    tc /= 2.0;
     multi++;
   }
   if (multi > MAX_TBC) {
