@@ -27,9 +27,9 @@
 
 // Sensor selection
 //#define ADIS16470
-#define ADIS16475
+//#define ADIS16475
 //#define ADIS16477
-//#define ADIS16495
+#define ADIS16495
 //#define ADIS16500
 //#define ADIS16505
 
