@@ -44,8 +44,8 @@ ADIS1647X / PCB series can be installed by using optional parts.
 
 # New Features (Introduced in v1.5.0)
   - Starting from v1.5.0, we have merged the following two new features into the "main" branch:
-    - Monitoring the accelerometer and gyro to update the gyro bias when the system is stationary.
-    - To prevent drift in the attitude angle along the vertical axis relative to gravity, monitoring the gyroscope and avoiding attitude angle calculations when the system is completely stationary.
+    - Monitoring the accelerometer and gyro to update the gyro bias when the system is stationary.(excluding ADIS165XX series)
+    - To prevent drift in the attitude angle along the vertical axis relative to gravity, monitoring the gyroscope and avoiding attitude angle calculations when the system is completely stationary.(excluding ADIS165XX series)
   - These features have not yet been thoroughly tested on various robots, so any feedback or information you can provide would be greatly appreciated.
   - The above features are OFF by default. To enable them, please issue the following command.
   - The pose estimation library has been updated to remove the functionality for calculating and removing the gyro bias.
