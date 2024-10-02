@@ -63,7 +63,7 @@ help
 There are two types of firmware updates.
 
   - Write from USB(DFU)
-    - When the 6th CONF switch is turned on and the power is turned on, the DFU mode is entered.
+    - When the 8th CONF switch is turned on and the power is turned on, the DFU mode is entered.
     - DFU can write firmware from [STM32CubeProg](https://www.st.com/en/development-tools/stm32cubeprog.html).
     - Download the sensor firmware [here](https://github.com/technoroad/TR_IMU_Platform/releases/latest). 
   - Write or debug with ST-LINK
