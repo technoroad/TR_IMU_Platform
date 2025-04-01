@@ -13,6 +13,8 @@ Currently supported devices are:
   - [ADSI16477-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16477.html)
   - [ADSI16500/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16500.html)
   - [ADSI16505-2/PCB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADIS16505.html)
+  - [ADIS16IMU5/PCBZ](https://www.analog.com/jp/resources/evaluation-hardware-and-software/evaluation-boards-kits/eval-adis16imu5.html#eb-overview)
+    - Mount this [ADIS16575-2](https://www.analog.com/jp/products/adis16575.html)
   
 - Higher grade MEMS IMU
   - [ADIS16495-2](https://www.analog.com/en/products/adis16495.html)
