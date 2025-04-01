@@ -52,6 +52,8 @@
 #define STARTUP_TIME_INIT 120;        // 120[s]
 #elif defined(ADIS16505)
 #define STARTUP_TIME_INIT 120;        // 120[s]
+#elif defined(ADIS16575)
+#define STARTUP_TIME_INIT 60;        // 60[s]
 #endif
 
 void InitializeParameters();
