@@ -41,7 +41,7 @@ static uint32_t kEndTick = 0;
 void StartupWaitTerminate();
 
 /* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
+extern System_Status gSystem;
 extern __IO uint32_t uwTick;
 
 /**
@@ -53,8 +53,8 @@ void StartupWait() {
   if (kStartupWaitEnableFlag) {
     // Updated every 1 second
     if (kPastTick != SEC_TICK) {
-      IMU_BiasCorrectionUpdate();
-      IMU_UpdateGyroBias();
+      gSystem.func.BiasCorrectionUpdate();
+      gSystem.func.UpdateGyroBias();
 
 #if 0
       // The bias correction has been removed in adis1650X.
@@ -106,7 +106,7 @@ void StartupWaitEnable() {
     kStartupWaitCompleteFlag = false;
     uwTick = 0;
     kPastTick = SEC_TICK;
-    kEndTick = SEC_TICK + gBoard.startup_time;
+    kEndTick = SEC_TICK + gSystem.conf.startup_time;
     BLUE_ON;
   }
 }

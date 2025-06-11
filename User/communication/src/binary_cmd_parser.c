@@ -46,6 +46,7 @@ uint16_t SPI_Read1byte(uint8_t addr);
 void SPI_Write1byte(uint8_t regAddr, uint8_t regData);
 
 /* Global variables ----------------------------------------------------------*/
+extern System_Status gSystem;
 
 /**
  * @brief  This function performs bi-directional conversion between USB and SPI.
@@ -64,11 +65,11 @@ void BinaryCmdParse(char *cmd, uint32_t len) {
     COMM_putd(buf, 2);
 
   } else if (cmd[0] == 0x61) {  // Data manipulation command
-    if (cmd[1] == BURST_CMD) {  // Burst mode
+    if (cmd[1] == gSystem.tset.burst_cmd) {  // Burst mode
       memset(kSpiBuf, 0, sizeof(kSpiBuf));
 
       // Read the sensor value
-      SPI_Read1byte(BURST_CMD);
+      SPI_Read1byte(gSystem.tset.burst_cmd);
       for (int i = 0; i < 10; i++) {
         kSpiBuf[i] = SPI_Read1byte(0);
       }

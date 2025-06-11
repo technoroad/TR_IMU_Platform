@@ -48,9 +48,9 @@
  * @note  一度起動させると電源が落ちるまで止められません。
  *        "main.c"でMX_IWDG_Initを実行すると起動してしまうので注意
  */
-void IwdgEnable() {
+void IWDG_Enable() {
   //ウォッチドッグタイマによってリセットされたか確認する
-  if(IwdgCheckResetFlag()){
+  if(IWDG_CheckResetFlag()){
     // された
     SetSystemError(kIwdgResetDone);
     CLEAR_BIT(RCC->CSR, RCC_CSR_IWDGRSTF);
@@ -74,14 +74,14 @@ void IwdgEnable() {
  * @brief  IWDGのリロードカウンタのリフレッシュ
  * @note  常時動作する場所で実行してください
  */
-void IwdgRefresh() {
+void IWDG_Refresh() {
   LL_IWDG_ReloadCounter(IWDG);
 }
 
 /**
  * @brief IWDGのクロック源となるLSIの状態を取得します
  */
-bool IwdgIsEnable() {
+bool IWDG_IsEnable() {
   // IWDG起動時に自動で起動されるLSIの状態を返す
   return (LL_RCC_LSI_IsReady() != 1);
 }
@@ -91,7 +91,7 @@ bool IwdgIsEnable() {
  * @return  true : リセットされた
  *          false : リセットされていない
  */
-bool IwdgCheckResetFlag() {
+bool IWDG_CheckResetFlag() {
   // ウォッチドッグによってリセットしたか？
   if (READ_BIT(RCC->CSR, RCC_CSR_IWDGRSTF)) {
     // された

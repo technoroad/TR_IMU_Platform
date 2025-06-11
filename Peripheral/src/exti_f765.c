@@ -47,21 +47,21 @@ static uint32_t EXTIx = LL_EXTI_LINE_9;
  * @brief  EXTIの割り込みハンドラ
  * @note  この関数は"stm32f0xx_it.c"の"EXTI_IRQHandler"関数で呼び出されます。
  */
-void ExtiHandler() {
+void EXTI_Handler() {
   // 関数ポインタを使用して指定された関数を起動
   if(kInterruptAccept){
     if (UserHandler != NULL) {
       (UserHandler)();
     }
   }else{
-    ExtiStop();
+    EXTI_Stop();
   }
 }
 
 /**
  * @brief  EXTIのスタート関数
  */
-void ExtiStart() {
+void EXTI_Start() {
   kInterruptAccept = true;
   LL_EXTI_EnableIT_0_31(EXTIx);
 }
@@ -69,10 +69,10 @@ void ExtiStart() {
 /**
  * @brief  EXTIのストップ関数
  */
-void ExtiStop() {
+void EXTI_Stop() {
   kInterruptAccept = false;
   LL_EXTI_DisableIT_0_31(EXTIx);
-  LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_7);
+  LL_EXTI_ClearFlag_0_31(EXTIx);
 }
 
 /**
@@ -80,7 +80,7 @@ void ExtiStop() {
  * @param  handler : 関数ポインタ
  * @note
  */
-void ExtiAttachEventHandler(UserEventHandlerPtr handler) {
+void EXTI_AttachEventHandler(UserEventHandlerPtr handler) {
   //ユーザハンドラの設定
   UserHandler = handler;
 }

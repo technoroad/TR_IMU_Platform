@@ -97,7 +97,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  ExtiStop();
+  EXTI_Stop();
   setup();
   /* USER CODE END 2 */
 

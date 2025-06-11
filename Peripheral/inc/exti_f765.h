@@ -26,10 +26,10 @@
 #define PERIPHERAL_INC_EXTI_F765_H_
 
 #if defined(STM32F765xx)
-void ExtiHandler();
-void ExtiStart();
-void ExtiStop();
-void ExtiAttachEventHandler(UserEventHandlerPtr handler);
+void EXTI_Handler();
+void EXTI_Start();
+void EXTI_Stop();
+void EXTI_AttachEventHandler(UserEventHandlerPtr handler);
 #endif
 
 #endif /* PERIPHERAL_INC_EXTI_F765_H_ */

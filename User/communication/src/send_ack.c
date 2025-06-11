@@ -25,6 +25,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "libraries.h"
 
+/* Global variables ----------------------------------------------------------*/
+extern System_Status gSystem;
+
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
@@ -36,6 +39,7 @@
 static char kSendBuf[BUF_SIZE];
 static StringFormat kStringFormat = kYawPitchRoll;
 static bool kSendEnableFlg = false;
+static ImuDataList *list = &gSystem.data;
 
 /* Private function prototypes -----------------------------------------------*/
 void OutputStringType1(double *array, int length, int ap);
@@ -43,9 +47,6 @@ void OutputStringType2(uint32_t *array, int length);
 void OutputStringType3(double *a0, int a0_l, int ap, uint32_t *a1, int a1_l);
 void OutputBinary(uint32_t *array, int length);
 void PushString(void);
-
-/* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
 
 /**
  * @brief  IMU data is stored in the transmission buffer,
@@ -55,7 +56,7 @@ void PushImuData() {
   // Output according to the set transmission period.
   static int cnt = 0;
   if (kSendEnableFlg) {
-    if (cnt < gBoard.transmit_prescaler) {
+    if (cnt < gSystem.conf.transmit_prescaler) {
       cnt++;
     } else {
       PushString();
@@ -105,8 +106,6 @@ StringFormat GetOutputFormat(void) {
  * @brief  Update and transmit attitude angles.
  */
 void PushString(void) {
-  ImuDataList *list = IMU_GetDataList();
-
   // The mode is branched by the CONF switch.
   switch (kStringFormat) {
 

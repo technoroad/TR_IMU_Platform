@@ -28,22 +28,11 @@
 #if defined(STM32F765xx)
 #define TR_IMU_PLATFORM
 #define BoardName "TR-IMU-Platform"
-#define CTRL_PERIOD 0.001  // [s]
+#define CTRL_FREQ 1000
 #define SEND_BUFFER_SIZE 1024
-
-// SPI baudrate chage by sensor.
-#if defined(ADIS1647X)
-#define SPI_SINGLE_PRES LL_SPI_BAUDRATEPRESCALER_DIV64
-#define SPI_BURST_PRES LL_SPI_BAUDRATEPRESCALER_DIV128
-#elif defined(ADIS1649X)
-#define SPI_SINGLE_PRES LL_SPI_BAUDRATEPRESCALER_DIV32
-#define SPI_BURST_PRES LL_SPI_BAUDRATEPRESCALER_DIV32
-#else
-#error "SPI baudrate definition error"
-#endif
-
-// Address to start writing data to flash memory
-#define DATA_ADDR 0x080C0000
+#define SPI_1MHZ_PRES LL_SPI_BAUDRATEPRESCALER_DIV128
+#define SPI_2MHZ_PRES LL_SPI_BAUDRATEPRESCALER_DIV64
+#define SPI_3500KHZ_PRES LL_SPI_BAUDRATEPRESCALER_DIV32
 
 #define CSW1_MASK 0x01
 #define CSW2_MASK 0x02
@@ -54,7 +43,6 @@
 #define CSW7_MASK 0x40
 
 void CheckConfigrationSwitch();
-void ReadParameterFromFlash();
 #endif
 
 #endif /* PERIPHERAL_F765_INC_BOARD_H_ */

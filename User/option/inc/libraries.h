@@ -33,7 +33,7 @@
 // data defines
 #include "defines.h"
 #include "initial_parameter.h"
-#include "select_sensor.h"
+//#include "select_sensor.h"
 
 // peripheral
 #if defined(STM32F070xB)
@@ -49,23 +49,23 @@
 #include "gpio_f765.h"
 #include "exti_f765.h"
 #include "flash_f765.h"
+#include "flash_ctrl.h"
 #include "iwdg_f765.h"
 #include "spi_f765.h"
 #include "usart_f765.h"
 #include "xport_f765.h"
 #include "crc32.h"
+#include "checksum.h"
 #endif
 
 // option
 #include "delay.h"
 #include "str_edit.h"
-#include "csum.h"
 
 // sensors
-#include "adis_spi.h"
-#include "adis_data.h"
-#include "adis_ctrl.h"
-#include "adis_error.h"
+#include <adis_type1_ctrl.h>
+#include <adis_type2_ctrl.h>
+#include "imu_select.h"
 
 // filter
 #include "mkae_filter.h"

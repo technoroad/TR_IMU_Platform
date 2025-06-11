@@ -26,7 +26,8 @@
 #define PERIPHERAL_INC_SPI_F765_H_
 
 #if defined(STM32F765xx)
-void SPI_SetBaudRate(uint32_t ll_baud);
+void SPI_SetPrescaler(uint32_t ll_baud);
+void SPI_SetTStall(uint8_t t);
 void SPI_ReceiveDmaHandler(void);
 void SPI_WriteReceive(uint16_t *wb, uint16_t *rb, uint16_t length);
 void SPI_WriteReceiveBurstRead(uint16_t *wb, uint16_t *rb, uint16_t length);

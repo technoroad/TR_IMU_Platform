@@ -45,19 +45,28 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 MEMORY
 {
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 512K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
+  FLASH_SECTOR0 (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+  FLASH_SECTOR1 (rx) : ORIGIN = 0x08008000, LENGTH = 32K
+  FLASH    (rx)    : ORIGIN = 0x08010000,   LENGTH = 960K
 }
 
 /* Sections */
 SECTIONS
 {
-  /* The startup code into "FLASH" Rom type memory */
+  /* The startup code goes first into FLASH */
   .isr_vector :
   {
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >FLASH
+  } >FLASH_SECTOR0
+  
+    /* backup */
+  .backup_flash :
+  {
+      _backup_flash_start = .;
+      . = . + LENGTH(FLASH_SECTOR1);
+  } >FLASH_SECTOR1
 
   /* The program code and other data into "FLASH" Rom type memory */
   .text :

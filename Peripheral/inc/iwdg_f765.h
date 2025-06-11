@@ -26,10 +26,10 @@
 #define PERIPHERAL_INC_IWDG_F765_H_
 
 #if defined(STM32F765xx)
-void IwdgEnable();
-void IwdgRefresh();
-bool IwdgIsEnable();
-bool IwdgCheckResetFlag();
+void IWDG_Enable();
+void IWDG_Refresh();
+bool IWDG_IsEnable();
+bool IWDG_CheckResetFlag();
 #endif
 
 #endif /* PERIPHERAL_INC_IWDG_F765_H_ */

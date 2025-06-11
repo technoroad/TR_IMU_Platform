@@ -45,7 +45,7 @@ void XportsettingFunc();
 void StartDataAcquisition();
 
 /* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
+extern System_Status gSystem;
 
 /**
  * @brief  System state transition function
@@ -114,6 +114,9 @@ void SystemManager() {
  *  If the sensor ID is incorrect at this time, it transitions to "kFatalError".
  */
 void StartupFunc() {
+  // Setting the function to run on interrupt
+  EXTI_AttachEventHandler(ExtiInterrupt);
+
   // Acquisition of CONF switch information
   CheckConfigrationSwitch();
 
@@ -122,7 +125,7 @@ void StartupFunc() {
     // Standby enable for bias correction
     if (IsStartupWaitEnable()) {
       // Stop DR pin
-      ExtiStop();
+      EXTI_Stop();
       kStatus = kStartupWait;
     } else {
       // Start data acquisition without waiting
@@ -132,6 +135,9 @@ void StartupFunc() {
     // An error occurs if the device ID is not a compatible model
     SetSystemError(kIdIncorrectError);
   }
+
+  // Watchdog setting
+  IWDG_Enable();
 }
 
 /**
@@ -193,10 +199,22 @@ void AdiDriverFunc() {
  * @note  In the current version, it only transitions from "kStartup".
  */
 void SystemErrorFunc() {
-  if (READ_USER_SW) {
-    DelayMillisecond(500);
-    HAL_NVIC_SystemReset();
+  char str[128] = {0};
+
+  DelayMillisecond(1000);
+  IWDG_Refresh();
+
+  if(gSystem.tset.product_id == 0){
+    str_concat(str, "Failed to communicate with the sensor.");
+  }else{
+    str_concat(str, "ADIS");
+    str_concat(str, str_putn2(gSystem.tset.product_id));
+    str_concat(str, " is not supported.");
   }
+  str_concat(str, "\r\n\r\n");
+  USB_puts(str);
+  DelayMillisecond(500);
+  HAL_NVIC_SystemReset();
 }
 
 void XportsettingFunc() {
@@ -218,7 +236,7 @@ void ExtiInterrupt() {
 void StartDataAcquisition() {
   if (IsEnableAdiDriver()) {
     // don't use DR pin
-    ExtiStop();
+    EXTI_Stop();
 
     // adi_driver start
     kStatus = kAdiDriver;
@@ -228,7 +246,7 @@ void StartDataAcquisition() {
     DelayMillisecond(100);
 
     // Interrupt initiation by DR pin
-    ExtiStart();
+    EXTI_Start();
 
     // pose update start
     kStatus = kUpdatePose;

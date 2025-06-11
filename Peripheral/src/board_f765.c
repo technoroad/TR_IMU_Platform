@@ -37,7 +37,6 @@
 /* Private function prototypes -----------------------------------------------*/
 
 /* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
 
 /**
  * @brief  Set the board from the value of the configuration switch.
@@ -84,26 +83,6 @@ void CheckConfigrationSwitch() {
   }else{
     SetOutputFormat(format);
     XportDirectCommunicationSetting();
-  }
-}
-
-/**
- * @brief  Reads the saved settings from the flash area.
- * @note  If there is more than one checksum or
- *        the version is different, the initial value is called.
- */
-void ReadParameterFromFlash() {
-  uint32_t size = sizeof(gBoard);
-
-  // Read parameters from FLASH memory.
-  LoadFlash(DATA_ADDR, (uint8_t*) &gBoard, size);
-  uint16_t csum = Make16bitChecksum((uint8_t*) &gBoard, size - CSUM_SIZE);
-
-  // If the version is changed or the CSUM value does not match,
-  // the parameter is reset to the initial value.
-  if ((gBoard.version != VERSION) || (csum != gBoard.csum)) {
-    InitializeParameters();
-    WriteFlash(DATA_ADDR, (uint16_t*) &gBoard, size);
   }
 }
 

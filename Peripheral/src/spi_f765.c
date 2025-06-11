@@ -44,6 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 static uint32_t kTimeoutCnt = 0;
+static uint8_t kTStall = 16;
 
 /* Private function prototypes -----------------------------------------------*/
 static bool SPI_TimeoutReporter();
@@ -54,8 +55,12 @@ void SPI_ReceiveDmaEnable(uint16_t *rb,uint16_t len);
 /**
  * @brief  Sets the SPI speed.
  */
-void SPI_SetBaudRate(uint32_t ll_baud) {
+void SPI_SetPrescaler(uint32_t ll_baud) {
   LL_SPI_SetBaudRatePrescaler(SPIx, ll_baud);
+}
+
+void SPI_SetTStall(uint8_t t){
+  kTStall = t;
 }
 
 /***
@@ -108,7 +113,7 @@ void SPI_WriteReceive(uint16_t *wb, uint16_t *rb, uint16_t length) {
     }
     SPI_DISABLE_CHIPSELECT;
 
-    DelayMicrosecond(TSTALL);
+    DelayMicrosecond(kTStall);
   }
 }
 
@@ -130,6 +135,7 @@ void SPI_WriteReceiveBurstRead(uint16_t *wb, uint16_t *rb, uint16_t length) {
     }
   }
   SPI_DISABLE_CHIPSELECT;
+  DelayMicrosecond(kTStall);
 }
 
 /**

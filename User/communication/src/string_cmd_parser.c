@@ -26,6 +26,9 @@
 #include "libraries.h"
 #include "help_text.h"
 
+/* Global variables ----------------------------------------------------------*/
+extern System_Status gSystem;
+
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
@@ -41,6 +44,9 @@ static uint32_t kWordLenth = 0;
 static char *kWords[WORD_MAX];
 static char kMsgBuf[MSG_BUF_SIZE] = { 0 };
 static bool kEnableStringCommand = false;
+static IMU_Config *kConf = &gSystem.conf;
+static ImuDataList *list = &gSystem.data;
+static IMU_Function *kFunc = &gSystem.func;
 
 /* Private function prototypes -----------------------------------------------*/
 static bool START_func();
@@ -84,9 +90,6 @@ static bool SET_THRESHOLD_GYRO_func();
 static bool GET_THRESHOLD_ACCL_func();
 static bool GET_THRESHOLD_GYRO_func();
 static bool HELP_func();
-
-/* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
 
 //Command parse processing
 void StringCmdParse(char c) {
@@ -302,8 +305,8 @@ bool RESET_func() {
 }
 
 bool BIAS_func() {
-  IMU_BiasCorrectionUpdate();
-  IMU_UpdateGyroBias();
+  kFunc->BiasCorrectionUpdate();
+  kFunc->UpdateGyroBias();
   COMM_puts("bias\r\n");
   return true;
 }
@@ -311,7 +314,6 @@ bool BIAS_func() {
 bool FILTER_func() {
   MKAE_MS2016_FilterReset();
 
-  ImuDataList *list = IMU_GetDataList();
   list->yaw = 0;
   list->pitch = 0;
   list->roll = 0;
@@ -322,8 +324,8 @@ bool FILTER_func() {
 }
 
 bool START_BIAS_CORRECTION_func() {
-  IMU_BiasCorrectionUpdate();
-  IMU_UpdateGyroBias();
+  kFunc->BiasCorrectionUpdate();
+  kFunc->UpdateGyroBias();
   COMM_puts("START_BIAS_CORRECTION\r\n");
   return true;
 }
@@ -342,7 +344,7 @@ bool WRITE_REG_func() {
   uint16_t addr = HexStringToU16(kWords[2]);
   uint16_t value = HexStringToU16(kWords[3]);
 
-  IMU_WriteData(page, addr, value);
+  kFunc->WriteData(page,addr, value);
 
   str_concat(kMsgBuf, "WRITE_REG,");
   str_concat(kMsgBuf, str_putx(page, 2));
@@ -367,11 +369,11 @@ bool READ_REG_func() {
   uint16_t page = HexStringToU16(kWords[1]);
   uint16_t addr = HexStringToU16(kWords[2]);
 
-  if (IMU_IsBurstReadCommand(page, addr)) {
+  if (IMU_IsBurstReadCommand(addr)) {
     return false;
   }
 
-  uint16_t value = IMU_ReadData(page, addr);
+  uint16_t value = kFunc->ReadData(page,addr);
   str_concat(kMsgBuf, "READ_REG,");
   str_concat(kMsgBuf, str_putx(page, 2));
   str_concat(kMsgBuf, ",");
@@ -430,8 +432,7 @@ bool HARD_FILTER_SELECT_func() {
     array[i] = atoi(kWords[i + 1]);
   }
 
-  IMU_SetHardwareFilter(array[0], array[1],  //
-                        array[2], array[3], array[4], array[5]);
+  kFunc->SetHardwareFilter(array[0]);
 
   str_concat(kMsgBuf, "HARD_FILTER_SELECT,");
   for (int i = 0; i < 6; i++) {
@@ -444,8 +445,6 @@ bool HARD_FILTER_SELECT_func() {
 }
 
 bool READ_TEMP_func() {
-  ImuDataList *list = IMU_GetDataList();
-
   str_concat(kMsgBuf, "READ_TEMP,");
   str_concat(kMsgBuf, str_putlf(list->temperature, 5));
   str_concat(kMsgBuf, "\r\n");
@@ -464,13 +463,13 @@ bool SET_KP_KI_func() {
   if (!IsDoubleString(kWords[2]))
     return false;
 
-  gBoard.gain_p = DoubleStringToDouble(kWords[1]);
-  gBoard.gain_i = DoubleStringToDouble(kWords[2]);
+  kConf->gain_p = DoubleStringToDouble(kWords[1]);
+  kConf->gain_i = DoubleStringToDouble(kWords[2]);
 
   str_concat(kMsgBuf, "SET_KP_KI,");
-  str_concat(kMsgBuf, str_putlf(gBoard.gain_p, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->gain_p, 5));
   str_concat(kMsgBuf, ",");
-  str_concat(kMsgBuf, str_putlf(gBoard.gain_i, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->gain_i, 5));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 #endif
@@ -488,7 +487,7 @@ bool RESET_FILTER_func() {
 }
 
 static bool LOAD_INIT_func() {
-  InitializeParameters();
+  LoadSettingsFromFlash(true);
 
   str_concat(kMsgBuf, "LOAD_INIT\r\n");
   COMM_puts(kMsgBuf);
@@ -499,9 +498,8 @@ static bool LOAD_INIT_func() {
 static bool SAVE_PARAM_func() {
   SendStop();
 
-  uint32_t size = sizeof(gBoard);
-  gBoard.csum = Make16bitChecksum((uint8_t*) &gBoard, size - CSUM_SIZE);
-  WriteFlash(DATA_ADDR, (uint16_t*) &gBoard, size);
+  SetFlashImuSetting(&gSystem.conf);
+  SaveSettingsToFlash();
 
   str_concat(kMsgBuf, "SAVE_PARAM\r\n");
   COMM_puts(kMsgBuf);
@@ -512,18 +510,18 @@ static bool SAVE_PARAM_func() {
 static bool DUMP_PARAM_func() {
   SendStop();
 
-  double cycle = (gBoard.transmit_prescaler + 1) * CTRL_PERIOD * 1000.0;
+  double cycle = (kConf->transmit_prescaler + 1) * gSystem.tset.dt * 1000.0;
 
   str_concat(kMsgBuf, "DUMP_PARAM,");
-  str_concat(kMsgBuf, str_putx(gBoard.version, 8));
+  str_concat(kMsgBuf, str_putx(VERSION, 8));
   str_concat(kMsgBuf, ",");
-  str_concat(kMsgBuf, str_putlf(gBoard.gain_p, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->gain_p, 5));
   str_concat(kMsgBuf, ",");
-  str_concat(kMsgBuf, str_putlf(gBoard.gain_i, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->gain_i, 5));
   str_concat(kMsgBuf, ",");
   str_concat(kMsgBuf, str_putn2(cycle));
   str_concat(kMsgBuf, ",");
-  str_concat(kMsgBuf, str_putn2(gBoard.startup_time));
+  str_concat(kMsgBuf, str_putn2(kConf->startup_time));
 
   str_concat(kMsgBuf, "\r\n");
   COMM_PollingSend(kMsgBuf);
@@ -533,7 +531,7 @@ static bool DUMP_PARAM_func() {
 
 static bool GET_VERSION_func() {
   str_concat(kMsgBuf, "GET_VERSION,");
-  str_concat(kMsgBuf, str_putx(gBoard.version, 8));
+  str_concat(kMsgBuf, str_putx(VERSION, 8));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -548,7 +546,7 @@ static bool SET_SEND_CYCLE_func() {
     return false;
 
   uint16_t cycle = DecStringToDec(kWords[1]);
-  uint16_t min_cycle = (uint16_t) (CTRL_PERIOD * 1000.0);
+  uint16_t min_cycle = (uint16_t) (gSystem.tset.dt * 1000.0);
 
   cycle = cycle - cycle % min_cycle;
 
@@ -556,9 +554,9 @@ static bool SET_SEND_CYCLE_func() {
     return false;
   }
 
-  gBoard.transmit_prescaler = (cycle / min_cycle) - 1;
+  kConf->transmit_prescaler = (cycle / min_cycle) - 1;
 
-  double ssc = (gBoard.transmit_prescaler + 1) * CTRL_PERIOD * 1000.0;
+  double ssc = (kConf->transmit_prescaler + 1) * gSystem.tset.dt  * 1000.0;
 
   str_concat(kMsgBuf, "SET_SEND_CYCLE,");
   str_concat(kMsgBuf, str_putn2(ssc));
@@ -569,17 +567,10 @@ static bool SET_SEND_CYCLE_func() {
 }
 
 static bool GET_PROD_ID_func() {
-  str_concat(kMsgBuf, "GET_PROD_ID,ADIS");
-  str_concat(kMsgBuf, str_putn2(PRODUCT_ID));
+  uint16_t id = gSystem.tset.product_id;
 
-#if defined(_1BMLZ)
-  str_concat(kMsgBuf,"-1");
-#elif defined(_2BMLZ)
-  str_concat(kMsgBuf, "-2");
-#elif defined(_3BMLZ)
-  str_concat(kMsgBuf,"-3");
-#elif defined(NONE_BMLZ)
-#endif
+  str_concat(kMsgBuf, "GET_PROD_ID,ADIS");
+  str_concat(kMsgBuf, str_putn2(id));
 
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
@@ -680,10 +671,10 @@ static bool SET_STARTUP_TIME_func() {
     return false;
 
   uint16_t startup_time = DecStringToDec(kWords[1]);
-  gBoard.startup_time = startup_time;
+  kConf->startup_time = startup_time;
 
   str_concat(kMsgBuf, "SET_STARTUP_TIME,");
-  str_concat(kMsgBuf, str_putn2(gBoard.startup_time));
+  str_concat(kMsgBuf, str_putn2(kConf->startup_time));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -745,8 +736,7 @@ bool AUTO_UPDATE_ON_func() {
   if (kWordLenth != 1)
     return false;
 
-  gBoard.auto_update_enable = true;
-  IMU_SetBiasCorrectionTime(gBoard.auto_update_time);
+  kConf->auto_update_enable = true;
 
   str_concat(kMsgBuf, "AUTO_UPDATE_ON\r\n");
   COMM_puts(kMsgBuf);
@@ -758,7 +748,7 @@ bool AUTO_UPDATE_OFF_func() {
   if (kWordLenth != 1)
     return false;
 
-  gBoard.auto_update_enable = false;
+  kConf->auto_update_enable = false;
 
   str_concat(kMsgBuf, "AUTO_UPDATE_OFF\r\n");
   COMM_puts(kMsgBuf);
@@ -770,7 +760,7 @@ bool STATIONAL_OBSERVE_ON_func(){
   if (kWordLenth != 1)
     return false;
 
-  gBoard.stationary_observe_enable = true;
+  kConf->stationary_observe_enable = true;
 
   str_concat(kMsgBuf, "STATIONAL_OBSERVE_ON\r\n");
   COMM_puts(kMsgBuf);
@@ -786,10 +776,10 @@ bool SET_AUTO_UPDATE_TIME_func(){
     return false;
 
   uint16_t auto_update_time = DecStringToDec(kWords[1]);
-  gBoard.auto_update_time = auto_update_time;
+  kConf->auto_update_time = auto_update_time;
 
   str_concat(kMsgBuf, "SET_AUTO_UPDATE_TIME,");
-  str_concat(kMsgBuf, str_putn2(gBoard.auto_update_time));
+  str_concat(kMsgBuf, str_putn2(kConf->auto_update_time));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -798,7 +788,7 @@ bool SET_AUTO_UPDATE_TIME_func(){
 
 bool GET_AUTO_UPDATE_TIME_func(){
   str_concat(kMsgBuf, "GET_AUTO_UPDATE_TIME,");
-  str_concat(kMsgBuf, str_putn2(gBoard.auto_update_time));
+  str_concat(kMsgBuf, str_putn2(kConf->auto_update_time));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -809,7 +799,7 @@ bool STATIONAL_OBSERVE_OFF_func(){
   if (kWordLenth != 1)
     return false;
 
-  gBoard.stationary_observe_enable = false;
+  kConf->stationary_observe_enable = false;
 
   str_concat(kMsgBuf, "STATIONAL_OBSERVE_OFF\r\n");
   COMM_puts(kMsgBuf);
@@ -824,10 +814,10 @@ bool SET_THRESHOLD_ACCL_func() {
   if (!IsDoubleString(kWords[1]))
     return false;
 
-  gBoard.stational_accl_thresh = DoubleStringToDouble(kWords[1]);
+  kConf->stational_accl_thresh = DoubleStringToDouble(kWords[1]);
 
   str_concat(kMsgBuf, "SET_THRESHOLD_ACCL,");
-  str_concat(kMsgBuf, str_putlf(gBoard.stational_accl_thresh, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->stational_accl_thresh, 5));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -841,10 +831,10 @@ bool SET_THRESHOLD_GYRO_func() {
   if (!IsDoubleString(kWords[1]))
     return false;
 
-  gBoard.stational_gyro_thresh = DoubleStringToDouble(kWords[1]);
+  kConf->stational_gyro_thresh = DoubleStringToDouble(kWords[1]);
 
   str_concat(kMsgBuf, "SET_THRESHOLD_GYRO,");
-  str_concat(kMsgBuf, str_putlf(gBoard.stational_gyro_thresh, 5));
+  str_concat(kMsgBuf, str_putlf(kConf->stational_gyro_thresh, 5));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -853,7 +843,7 @@ bool SET_THRESHOLD_GYRO_func() {
 
 bool GET_THRESHOLD_ACCL_func(){
   str_concat(kMsgBuf, "GET_THRESHOLD_ACCL,");
-  str_concat(kMsgBuf, str_putlf(gBoard.stational_accl_thresh, 3));
+  str_concat(kMsgBuf, str_putlf(kConf->stational_accl_thresh, 3));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 
@@ -862,7 +852,7 @@ bool GET_THRESHOLD_ACCL_func(){
 
 bool GET_THRESHOLD_GYRO_func(){
   str_concat(kMsgBuf, "GET_THRESHOLD_GYRO,");
-  str_concat(kMsgBuf, str_putlf(gBoard.stational_gyro_thresh, 3));
+  str_concat(kMsgBuf, str_putlf(kConf->stational_gyro_thresh, 3));
   str_concat(kMsgBuf, "\r\n");
   COMM_puts(kMsgBuf);
 

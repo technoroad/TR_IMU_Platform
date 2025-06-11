@@ -31,6 +31,7 @@
 #define GAIN_P_INIT 1.0    // Kp gain
 #define GAIN_I_INIT 0.0    // Ki gain
 #define TRANSMIT_PRESCALER_INIT 0  //
+#define STARTUP_TIME_INIT 60
 #define VIBRATION_THRESHOLD_INIT 0.1
 #define MOTION_THRESHOLD_INIT 0.1
 #define AUTO_UPDATE_ENABLE_INIT 0
@@ -38,23 +39,6 @@
 #define ST_OBSERVE_ENABLE_INIT 0
 #define ST_ACCL_INIT 0.05
 #define ST_GYRO_INIT 0.05
-
-// Standby counter at startup
-#if defined(ADIS16470)
-#define STARTUP_TIME_INIT 120;        // 120[s]
-#elif defined(ADIS16475)
-#define STARTUP_TIME_INIT 120;        // 120[s]
-#elif defined(ADIS16477)
-#define STARTUP_TIME_INIT 120;        // 120[s]
-#elif defined(ADIS16495)
-#define STARTUP_TIME_INIT 60;        // 60[s]
-#elif defined(ADIS16500)
-#define STARTUP_TIME_INIT 120;        // 120[s]
-#elif defined(ADIS16505)
-#define STARTUP_TIME_INIT 120;        // 120[s]
-#elif defined(ADIS16575)
-#define STARTUP_TIME_INIT 60;        // 60[s]
-#endif
 
 void InitializeParameters();
 

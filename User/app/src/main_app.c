@@ -41,14 +41,8 @@
  * @brief  Settings that are only performed at startup.
  */
 void setup() {
-  // Setting the function to run on interrupt
-  ExtiAttachEventHandler(ExtiInterrupt);
-
   // Read parameters from FLASH memory.
-  ReadParameterFromFlash();
-
-  // Watchdog setting
-  IwdgEnable();
+  LoadSettingsFromFlash(false);
 }
 
 /**
@@ -57,7 +51,7 @@ void setup() {
 void loop() {
   while (1) {
     // watchdog refresh
-    IwdgRefresh();
+    IWDG_Refresh();
 
     // Controller for correct operation
     SystemManager();

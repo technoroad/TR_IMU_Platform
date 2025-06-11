@@ -26,9 +26,9 @@
 #define PERIPHERAL_INC_FLASH_F765_H_
 
 #if defined(STM32F765xx)
-void EraseFlash(void);
-void WriteFlash(uint32_t address, uint16_t *data, uint32_t size);
-void LoadFlash(uint32_t address, uint8_t *data, uint32_t size);
+bool FLASH_Clear() ;
+void FLASH_Load(uint32_t address, uint8_t *data, uint32_t size) ;
+bool FLASH_Store(uint32_t address, uint8_t *data, uint32_t size,uint8_t aligned);
 #endif
 
 #endif /* PERIPHERAL_INC_FLASH_F765_H_ */

@@ -56,7 +56,7 @@ void SetSystemError(SystemError error) {
     SetSystemFatalError();
     COMM_ResetDoubleBuffer();
     SendStop();
-    ExtiStop();
+    EXTI_Stop();
   }
 
   // error variable for reporting and "RED LED ON"
@@ -100,7 +100,6 @@ bool IsFatalError(SystemError error) {
 SystemError DetectSensorError(uint16_t flag) {
   SystemError error = kNoneError;
 
-#ifdef ADIS1647X
   if (flag & ADIS1647X_CLOCKERROR) {
     error = k1647xClockError;
   } else if (flag & ADIS1647X_MEMORYERROR) {
@@ -116,24 +115,5 @@ SystemError DetectSensorError(uint16_t flag) {
   } else if (flag & ADIS1647X_DATAPATHOVERRUN) {
     error = k1647xDataPathOverrun;
   }
-#elif defined(ADIS1649X)
-  if (flag & ADIS1649X_WATCHDOGTIMER) {
-    error = k1649xWatchdogTimer;
-  } else if (flag & ADIS1649X_SYNCERROR) {
-    error = k1649xSyncError;
-  } else if (flag & ADIS1649X_PROCESSINGOVERRUN) {
-    error = k1649xProcessingOverrun;
-  } else if (flag & ADIS1649X_MEMORYUPDATEFAILURE) {
-    error = k1649xMemoryUpdateFailure;
-  } else if (flag & ADIS1649X_SENSORFAILURE) {
-    error = k1649xSensorFailure;
-  } else if (flag & ADIS1649X_SPICOMMERROR) {
-    error = k1649xSpiCommError;
-  } else if (flag & ADIS1649X_SRAMERROR) {
-    error = k1649xSramError;
-  } else if (flag & ADIS1649X_BOOTMEMORYFAILURE) {
-    error = k1649xBootMemoryFailure;
-  }
-#endif
   return error;
 }

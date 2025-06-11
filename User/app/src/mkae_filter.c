@@ -25,6 +25,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "libraries.h"
 
+/* Global variables ----------------------------------------------------------*/
+extern System_Status gSystem;
+
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
@@ -49,14 +52,13 @@ static double gyro_mah[3], acc_mah[3];
 static mkAE_IMU_MS2016 mkae_ms;
 static double wA_ms = 1;
 #endif
-static double moved_thresh = GYRO_NOISE_DENSITY + GYRO_B;
+static double moved_thresh = 0.008 + GYRO_B;
+static IMU_TypeSetting *kSet = &gSystem.tset;
+static ImuDataList *list = &gSystem.data;
 
 /* Private function prototypes -----------------------------------------------*/
 void Get6AxisData(double *gyro, double *acc);
 void CheckBiasAutoUpdate();
-
-/* Global variables ----------------------------------------------------------*/
-extern BoardParameterList gBoard;
 
 /**
  * @brief  Filter initialization
@@ -65,12 +67,10 @@ void MKAE_MS2016_Initialize() {
   double gyro[3], acc[3];
   Get6AxisData(gyro, acc);
 
+  moved_thresh = GYRO_B + kSet->gyro_noise_density;
+
   // Since the error occurs only for the first time, it is resolved.
-#if defined(ADIS1647X)
-  IMU_ReadData(PAGE0, DIAG_STAT);
-#elif defined(ADIS1649X)
-  IMU_ReadData(PAGE0, SYS_E_FLAG);
-#endif
+  gSystem.func.GetDiagnosticFlag();
 
 #ifdef MAHONY
   mkAE_IMU_Initialize(&mkae_Mah, acc);
@@ -92,18 +92,15 @@ void MKAE_MS2016_UpdateAngle() {
   CheckBiasAutoUpdate();
 
   // Determine whether movement has occurred using the gyro value.
-  bool moved = !gBoard.stationary_observe_enable;
-  for(int i=0;i < 3;i++){
-    if(fabs(gyro[i]) > moved_thresh){
+  bool moved = !gSystem.conf.stationary_observe_enable;
+  for (int i = 0; i < 3; i++) {
+    if (fabs(gyro[i]) > moved_thresh) {
       moved = true;
     }
   }
 
-  // Get data structure pointer
-  ImuDataList *list = IMU_GetDataList();
-
   // Calculate only when it moves.
-  if(moved){
+  if (moved) {
 #ifdef MAHONY
     // Output of attitude matrix
     mkAE_IMU_MahonyECF_AM(&mkae_Mah, gyro, acc, wA_Mah,  //
@@ -128,9 +125,9 @@ void MKAE_MS2016_UpdateAngle() {
 
 #else
     // Output of attitude matrix
-    mkAE_IMU_MS2016_CF_AM(&mkae_ms, gyro, acc, wA_ms, gBoard.gain_p,
-                          gBoard.gain_i,
-                          CTRL_PERIOD);
+    mkAE_IMU_MS2016_CF_AM(&mkae_ms, gyro, acc, wA_ms, gSystem.conf.gain_p,
+                          gSystem.conf.gain_i,
+                          kSet->dt);
 
     // Output of Euler angles from attitude matrix
     mk_Cmpt_ZYXangle_AM(mkae_ms.mkae.m_att, angle);
@@ -179,19 +176,19 @@ void MKAE_MS2016_SetParam(mkAE_IMU_MS2016 *mkae_ms) {
   /* Filter for the estimate of the acceleration */
   for (i = 0; i < 3; i++) {
     mk_Set_Param_1stOrderFilter_LP(mkae_ms->param_EstAcc0Fil[i],  //
-        1.0, FREQ_ACC, CTRL_PERIOD);
+        1.0, FREQ_ACC, kSet->dt);
   }
 
   /* Filter for the accelerometer's measurement */
   for (i = 0; i < 3; i++) {
     mk_Set_Param_1stOrderFilter_LP(mkae_ms->param_MesAccFil[i],  //
-        1.0, FREQ_RELAX, CTRL_PERIOD);
+        1.0, FREQ_RELAX, kSet->dt);
   }
 
   /* Filter for the gyroscope's measurement */
   for (i = 0; i < 3; i++) {
     mk_Set_Param_1stOrderFilter_PC(mkae_ms->param_MesgyroFil[i],  //
-        1.0, FERQ_GYRO, FREQ_RELAX, CTRL_PERIOD);
+        1.0, FERQ_GYRO, FREQ_RELAX, kSet->dt);
   }
 #endif
 }
@@ -200,22 +197,12 @@ void MKAE_MS2016_SetParam(mkAE_IMU_MS2016 *mkae_ms) {
  * @brief  Calculate angular velocity and acceleration values.
  */
 void Get6AxisData(double *gyro, double *accl) {
-  ImuDataList *list = IMU_GetDataList();
-
   IMU_Update6AxisData();
 
-#if defined(ADIS1647X)
+#if 0
   // Checksum judgment when burst read is enabled.
-  if (IMU_IsBurstReadEnable()) {
+  if (kSet->burst_enable) {
     if (list->csum != list->sum) {
-      // However, the current version does not stop working.
-      SetSystemError(kBurstReadChecksumError);
-    }
-  }
-#elif defined(ADIS1649X)
-  // Checksum judgment when burst read is enabled.
-  if (IMU_IsBurstReadEnable()) {
-    if (list->recv_crc32 != list->calc_crc32) {
       // However, the current version does not stop working.
       SetSystemError(kBurstReadChecksumError);
     }
@@ -242,34 +229,31 @@ void Get6AxisData(double *gyro, double *accl) {
   list->accl_synthesis = n;
 }
 
-void CheckBiasAutoUpdate(){
-  ImuDataList *list = IMU_GetDataList();
-
+void CheckBiasAutoUpdate() {
   // If no movement is detected for a certain period, update the bias.
-  if (gBoard.auto_update_enable) {
+  if (gSystem.conf.auto_update_enable) {
     static uint32_t cnt = 0;
-    static uint32_t freq = (uint32_t) (1.0 / CTRL_PERIOD);
 
-    uint32_t update_tick = freq * gBoard.auto_update_time;
+    uint32_t update_tick = (1.0 / kSet->dt) * gSystem.conf.auto_update_time;
     cnt++;
 
     double vib = fabs(list->accl_synthesis - 1.0);
 
     // The counter is reset when the acceleration changes by more than the threshold value.
-    if(vib > gBoard.stational_accl_thresh){
+    if (vib > gSystem.conf.stational_accl_thresh) {
       cnt = 0;
     }
 
     // The counter is reset when the gyro changes by more than the threshold.
-    for(int i=0; i < 3; i++){
-      if(fabs(list->gyro.fpp[i]) > gBoard.stational_gyro_thresh){
+    for (int i = 0; i < 3; i++) {
+      if (fabs(list->gyro.fpp[i]) > gSystem.conf.stational_gyro_thresh) {
         cnt = 0;
       }
     }
 
     // When the counter exceeds the IMU averaging time, the bias is updated.
     if (cnt > update_tick) {
-      IMU_BiasCorrectionUpdate();
+      gSystem.func.BiasCorrectionUpdate();
       cnt = 0;
     }
   }
