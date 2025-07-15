@@ -27,7 +27,7 @@
 
 #include <libraries.h>
 
-#define VERSION 0x20240826    // Version
+#define VERSION 0x20250715    // Version
 #define GAIN_P_INIT 1.0    // Kp gain
 #define GAIN_I_INIT 0.0    // Ki gain
 #define TRANSMIT_PRESCALER_INIT 0  //
