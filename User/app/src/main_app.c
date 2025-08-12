@@ -37,10 +37,44 @@
 
 /* Global variables ----------------------------------------------------------*/
 
+#define CLOCK_FREQ 216000000UL
+#define TARGET_FREQ 2000.0
+
+void find_best_psc_arr(uint16_t *best_psc, uint16_t *best_arr,
+                       double *best_freq, double *best_error) {
+  *best_error = 1e9;
+
+  for (uint32_t psc = 1; psc <= 65535; psc++) {
+    // ARRを計算（1減算はタイマの仕様）
+    uint32_t arr = (uint32_t) (CLOCK_FREQ / ((psc + 1) * TARGET_FREQ)) - 1;
+
+    if (arr == 0 || arr > 65535) {
+      continue;  // 範囲外は無視
+    }
+
+    double freq = (double) CLOCK_FREQ / ((psc + 1) * (arr + 1));
+    double error = fabs(freq - TARGET_FREQ);
+
+    if (error < *best_error) {
+      *best_error = error;
+      *best_psc = (uint16_t) psc;
+      *best_arr = (uint16_t) arr;
+      *best_freq = freq;
+    }
+  }
+}
+
 /**
  * @brief  Settings that are only performed at startup.
  */
 void setup() {
+//  uint16_t best_psc = 0;
+//  uint16_t best_arr = 0;
+//  double best_freq = 0.0;
+//  double best_error = 0.0;
+//  find_best_psc_arr(&best_psc, &best_arr, &best_freq, &best_error);
+
+  DWT_Init();
   // Read parameters from FLASH memory.
   LoadSettingsFromFlash(false);
 }
@@ -60,5 +94,7 @@ void loop() {
     if (COMM_IsTransmitFree()) {
       COMM_TransmitStart();
     }
+
+    __WFI();
   }
 }

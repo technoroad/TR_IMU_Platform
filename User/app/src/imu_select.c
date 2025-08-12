@@ -42,6 +42,7 @@ bool IMU_Initialization(void) {
     return false;
   }
 
+  kFunc->SetDirectSyncMode();
   kFunc->SetDecimationRate();
   DelayMillisecond(500);
 
@@ -197,13 +198,17 @@ bool kPorductSelector() {
     kSet->accl_sensi = 262144000.0f;
     kSet->burst_cmd_size = 18;
     kSet->tstall = 5;
+    kSet->conversion_rate = 4000;
+    kSet->dec_rate = kSet->conversion_rate / CTRL_FREQ - 1 ;
+    kSet->dt = 1.0 / (kSet->conversion_rate / (kSet->dec_rate + 1));
+    kSet->filter = 2;
 
     // enable 32bit burst read
     kFunc->EnableBurstRead();
   }else if (id == 16495) {
     kSet->type = IMU_Type2;
     kSet->tstall = 5;
-    kSet->conversion_rate = 4250;
+    kSet->conversion_rate = 4000;
     kSet->dec_rate = kSet->conversion_rate / CTRL_FREQ - 1 ;
     kSet->dt = 1.0 / (kSet->conversion_rate / (kSet->dec_rate + 1));
     kSet->max_tbc = 13;
@@ -232,9 +237,9 @@ bool kPorductSelector() {
   SPI_SetTStall(kSet->tstall);
 
   if(kSet->type == IMU_Type1){
-    SPI_SetPrescaler(SPI_2MHZ_PRES);
+    SPI_SetPrescaler(SPI_1MHZ_PRES);
   }else if(kSet->type == IMU_Type2){
-    SPI_SetPrescaler(SPI_3500KHZ_PRES);
+    SPI_SetPrescaler(SPI_2MHZ_PRES);
   }
 
   // センサの設定が読み込めたかチェック

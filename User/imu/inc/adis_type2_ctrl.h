@@ -32,6 +32,7 @@
 // PAGE 3 address
 //==============================================================================
 #define TYPE2_GLOB_CMD 0x02
+#define TYPE2_FNCTIO_CTRL 0x06
 #define TYPE2_MSC_CTRL 0x0A
 #define TYPE2_DEC_RATE 0x0C
 #define TYPE2_NULL_CNFG 0x0E

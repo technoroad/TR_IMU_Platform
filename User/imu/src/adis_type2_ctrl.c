@@ -47,6 +47,7 @@ static void IMU_SetDecimationRate();
 static void IMU_EnableBurstRead();
 static void IMU_BiasCorrectionUpdate();
 static void IMU_SetHardwareFilter(uint8_t f0);
+static void IMU_SetDirectSyncMode();
 static void IMU_SetBiasCorrectionTime(uint32_t sec);
 static uint16_t IMU_GetDiagnosticFlag();
 static uint16_t IMU_GetProductId();
@@ -71,6 +72,7 @@ void IMU_RegisterType2Functions(){
   kFunc->BiasCorrectionUpdate      = NULL;
   kFunc->SetHardwareFilter         = NULL;
   kFunc->SetBiasCorrectionTime     = NULL;
+  kFunc->SetDirectSyncMode         = NULL;
   kFunc->GetDiagnosticFlag         = NULL;
   kFunc->GetProductId              = NULL;
   kFunc->GetRangeModel             = NULL;
@@ -86,6 +88,7 @@ void IMU_RegisterType2Functions(){
   kFunc->BiasCorrectionUpdate      = IMU_BiasCorrectionUpdate;
   kFunc->SetHardwareFilter         = IMU_SetHardwareFilter;
   kFunc->SetBiasCorrectionTime     = IMU_SetBiasCorrectionTime;
+  kFunc->SetDirectSyncMode         = IMU_SetDirectSyncMode;
   kFunc->GetDiagnosticFlag         = IMU_GetDiagnosticFlag;
   kFunc->GetProductId              = IMU_GetProductId;
   kFunc->GetRangeModel             = IMU_GetRangeModel;
@@ -145,6 +148,12 @@ static void IMU_SetHardwareFilter(uint8_t f0) {
   DelayMillisecond(1);
 
   kSet->filter = f0;
+}
+
+static void IMU_SetDirectSyncMode(){
+  uint16_t reg = IMU_ReadData(PAGE3,TYPE2_FNCTIO_CTRL);
+  reg |= 0xC0;
+  IMU_WriteData(PAGE3,TYPE2_FNCTIO_CTRL, reg);
 }
 
 static uint16_t IMU_GetDiagnosticFlag(){
@@ -240,10 +249,8 @@ static void IMU_Update6AxisDataWithBurstRead() {
   }
 
   kSendBuf[0] = kSet->burst_cmd << 8;
-  SPI_SetPrescaler(SPI_1MHZ_PRES);
   SPI_WriteReceiveBurstRead((uint16_t*) kSendBuf, (uint16_t*) kReadBuf,
                             kSet->burst_cmd_size);
-  SPI_SetPrescaler(SPI_2MHZ_PRES);
 
   kConvert32bitDataWithBurstRead((uint16_t*) &kReadBuf[1]);
 }

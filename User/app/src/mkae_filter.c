@@ -115,11 +115,11 @@ void MKAE_MS2016_UpdateAngle() {
     }
 
 #elif defined(MASUYA)
-#if 0
+#if 1
     // Output of quat
-    mkAE_IMU_MS2016_CF_Quat(&mkae_ms, gyro, acc, wA_ms, gBoard.gain_p,
-                          gBoard.gain_i,
-                          CTRL_PERIOD);
+    mkAE_IMU_MS2016_CF_Quat(&mkae_ms, gyro, acc, wA_ms, gSystem.conf.gain_p,
+                          gSystem.conf.gain_i,
+                          kSet->dt);
     // Output of Euler angles from quat
     mk_Cmpt_ZYXangle_Quat(mkae_ms.mkae.q_est,angle);
 

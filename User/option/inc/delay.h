@@ -24,7 +24,9 @@
 #ifndef INC_DELAY_H_
 #define INC_DELAY_H_
 
+void DWT_Init(void);
 void DelayMicrosecond(uint32_t delay);
 void DelayMillisecond(uint32_t delay);
+uint32_t ElapsedMicroseconds(void);
 
 #endif /* INC_DELAY_H_ */

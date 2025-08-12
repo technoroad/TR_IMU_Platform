@@ -130,6 +130,10 @@ void StartupFunc() {
     } else {
       // Start data acquisition without waiting
       StartDataAcquisition();
+
+      // Start pwm output for direct input sync
+      PWM_Initialize();
+      PWM_StartOutput();
     }
   } else {
     // An error occurs if the device ID is not a compatible model
@@ -165,6 +169,8 @@ void StartupWaitFunc() {
  * @note  There is no event to transition to "kFatalError" in the current version.
  */
 void UpdatePoseFunc() {
+  static int latency = 5;
+
   // Reset system if user switch is pressed
   if (READ_USER_SW) {
     SendStop();
@@ -177,11 +183,21 @@ void UpdatePoseFunc() {
 
     DEBUG0_PIN_HIGH;
 
-    // Acquisition of sensor value and calculation of attitude angle.
-    MKAE_MS2016_UpdateAngle();
+    if(latency == 1){
+      // Filter initialization
+      MKAE_MS2016_Initialize();
+      IMU_Update6AxisData();
+      latency--;
+    }else if(latency == 0){
+      // Acquisition of sensor value and calculation of attitude angle.
+      MKAE_MS2016_UpdateAngle();
 
-    // transmit data
-    PushImuData();
+      // transmit data
+      PushImuData();
+    }else{
+      IMU_Update6AxisData();
+      latency--;
+    }
 
     DEBUG0_PIN_LOW;
   }
@@ -241,10 +257,6 @@ void StartDataAcquisition() {
     // adi_driver start
     kStatus = kAdiDriver;
   } else if (IsEnableStringCommand()) {
-    // Filter initialization
-    MKAE_MS2016_Initialize();
-    DelayMillisecond(100);
-
     // Interrupt initiation by DR pin
     EXTI_Start();
 

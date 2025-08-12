@@ -100,7 +100,6 @@ void SPI_ReceiveDmaEnable(uint16_t *rb,uint16_t len) {
  */
 void SPI_WriteReceive(uint16_t *wb, uint16_t *rb, uint16_t length) {
   SPI_ReceiveDmaEnable(rb,length);
-
   for (int i = 0; i < length; i++) {
     SPI_ENABLE_CHIPSELECT;
     LL_SPI_TransmitData16(SPIx, wb[i]);

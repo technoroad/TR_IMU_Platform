@@ -207,7 +207,6 @@ void DMA1_Stream2_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
   USART_ReceiveDmaHandler();
   /* USER CODE END DMA1_Stream2_IRQn 0 */
-
   /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
 
   /* USER CODE END DMA1_Stream2_IRQn 1 */
@@ -221,7 +220,6 @@ void DMA1_Stream4_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
   USART_TransmitDmaHandler();
   /* USER CODE END DMA1_Stream4_IRQn 0 */
-
   /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
 
   /* USER CODE END DMA1_Stream4_IRQn 1 */
@@ -268,7 +266,6 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
   SPI_ReceiveDmaHandler();
   /* USER CODE END DMA2_Stream0_IRQn 0 */
-
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
 
   /* USER CODE END DMA2_Stream0_IRQn 1 */

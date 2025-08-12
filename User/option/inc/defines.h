@@ -131,6 +131,7 @@ typedef struct {
   void (*EnableBurstRead)(void);
   void (*BiasCorrectionUpdate)(void);
   void (*SetHardwareFilter)(uint8_t f0);
+  void (*SetDirectSyncMode)(void);
   void (*SetBiasCorrectionTime)(uint32_t sec);
   uint16_t (*GetDiagnosticFlag)(void);
   uint16_t (*GetProductId)(void);

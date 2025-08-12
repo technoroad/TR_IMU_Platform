@@ -39,6 +39,7 @@ extern "C" {
 #include "stm32f7xx_ll_utils.h"
 #include "stm32f7xx_ll_pwr.h"
 #include "stm32f7xx_ll_spi.h"
+#include "stm32f7xx_ll_tim.h"
 #include "stm32f7xx_ll_usart.h"
 #include "stm32f7xx_ll_gpio.h"
 
@@ -106,6 +107,8 @@ void Error_Handler(void);
 #define CONF_SW1_GPIO_Port GPIOB
 #define USER_SW_Pin LL_GPIO_PIN_1
 #define USER_SW_GPIO_Port GPIOB
+#define ADIS_SYNC_Pin LL_GPIO_PIN_8
+#define ADIS_SYNC_GPIO_Port GPIOB
 #define ADIS_DR_Pin LL_GPIO_PIN_9
 #define ADIS_DR_GPIO_Port GPIOB
 #define ADIS_DR_EXTI_IRQn EXTI9_5_IRQn

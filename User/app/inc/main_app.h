@@ -25,6 +25,8 @@
 #ifndef MAIN_APP_H_
 #define MAIN_APP_H_
 
+#define VERSION 0x20251009    // Version
+
 void setup();
 void loop();
 

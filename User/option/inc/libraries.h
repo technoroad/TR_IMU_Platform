@@ -56,6 +56,7 @@
 #include "xport_f765.h"
 #include "crc32.h"
 #include "checksum.h"
+#include "pwm_f765.h"
 #endif
 
 // option
